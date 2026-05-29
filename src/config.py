@@ -29,6 +29,17 @@ class Settings(BaseSettings):
     RANDOM_SEED: int = Field(default=42)
     TEST_SIZE: float = Field(default=0.2, gt=0.0, lt=1.0)
     VALIDATION_SIZE: float = Field(default=0.2, gt=0.0, lt=1.0)
+    RECOMMENDATION_K: int = Field(default=10, gt=0)
+
+    # SVD
+    SVD_N_FACTORS: int = Field(default=50, gt=0)
+
+    # MLP
+    MLP_EMBEDDING_DIM: int = Field(default=64, gt=0)
+    MLP_HIDDEN_DIMS: list[int] = Field(default=[128, 64])
+    MLP_EPOCHS: int = Field(default=50, gt=0)
+    MLP_LEARNING_RATE: float = Field(default=0.001, gt=0.0)
+    MLP_BATCH_SIZE: int = Field(default=256, gt=0)
 
     # MLflow / Databricks
     MLFLOW_TRACKING_URI: str = Field(default="local")

@@ -1,25 +1,121 @@
+Uma empresa de e-commerce precisa de um sistema de recomendação de produtos baseado no comportamento de navegação dos usuários.
+
 # Datasets que podemos utilizar
 
-- https://www.kaggle.com/datasets/psparks/instacart-market-basket-analysis
 - https://www.kaggle.com/datasets/retailrocket/ecommerce-dataset *← Claude mandou escolher esse pelo realismo e volumetria*
-- https://www.kaggle.com/datasets/sherinclaudia/movielens
 
+# Direcionais para o EDA
+- Quantidade dos eventos (Distruibuição)
+- Quantos usuários tem poucos transactions (1-5) (desconsiderar)
+- Distribuição da coluna value (outliers, média, mediana, missing values)
+- Distribuição de eventos ao longo do tempo — verificar sazonalidade que possa comprometer o split 60/20/20 (isolar sazonalidades)
+- Volume de usuários com interações nos 3 períodos (treino, validação, teste) — usuários que só aparecem no teste são cold start e não conseguimos recomendar
+
+
+# Modelagem dos dados
+
+Informações mínimas que o dataset deve conter (INPUT):
+- **user_id:** identificador único do usuário (númerico sequencial)
+- **item_id:** identificador único do produto
+- **rating/score:** baseado no comportamento do usuário (definido arbitrariamente)
+    - Exemplo: 1 se o usuário clicou no produto, 2 se adicionou ao carrinho, 3 se comprou
+    - Podemos utilizar somente a interação com o maior peso (no caso acima a compra), mas entendo que a soma das interações pode ser mais rica para o modelo aprender padrões de comportamento
+- **value:** valor monetário do item (vamos usar para as métricas de negócio)
+
+Informações que o modelo vai retornar (OUTPUT):
+- Para cada usuário, uma lista ordenada dos top-N produtos recomendados (item_id)
+
+Assim:
+| user_id | recommendations |
+| ------- | --------------- |
+| 12345   | [67890, 11223, 44556, ...] |
+| 67891   | [44556, 99001, 33445, ...] |
+
+Ou assim:
+| user_id | item_id | rank |
+| ------- | ------- | ---- |
+| 12345   | 67890   | 1 |
+| 12345   | 11223   | 2 |
+| 12345   | 44556   | 3 |
+
+
+# Estratégia de Split
+
+O dataset tem timestamp — o split é feito por **ordem cronológica**, não aleatoriamente. Split aleatório vazaria interações futuras para o treino, inflando artificialmente as métricas.
+
+**Premissa:** se o modelo acerta prever o que o usuário comprou no período de teste, é razoável assumir que uma recomendação daquele item teria influenciado a compra. É uma aproximação — sem teste A/B em produção não há como provar causalidade, mas é o padrão aceito para avaliação offline de RecSys.
+
+
+```
+|←────── treino (60%) ──────→|←── validação (20%) ──→|←── teste (20%) ──→|
+      interações antigas         intermediárias          mais recentes
+              ↑                        ↑                       ↑
+       aprende padrões       ajusta hiperparâmetros     avaliação final
+```
+
+- **Treino:** interações mais antigas — o modelo aprende os padrões de comportamento
+- **Validação:** interações intermediárias — usado para ajustar hiperparâmetros e early stopping
+- **Teste:** interações mais recentes — avaliação final, tocado apenas uma vez
 
 
 # Modelos que podemos utilizar
 
-|Modelo | Biblioteca |
-| --- | --- |
-|MLP embedding-based | PyTorch
-|PopularityRecommender | Lógica própria
-|SVD/NMF | surprise
+|Modelo | Descrição | Biblioteca |
+| --- | --- | --- |
+|PopularityRecommender | Tem o mesmo papel do "DummyClassifier". Contagem dos itens mais comprados | Lógica própria |
+|SVD/NMF | Utiliza técnicas de fatoração de matriz para recomendação | surprise |
+|MLP embedding-based | Utiliza o pytorch para criar embeddings e definir uma arquitetura neural | PyTorch |
+
+# Hiperparâmetros predefinidos no config.py
+
+| Parâmetro | Valor | Descrição |
+| --- | --- | --- |
+| RANDOM_SEED | 42 | Semente para reprodutibilidade |
+| TEST_SIZE | 0.2 | 20% das interações mais recentes reservadas para teste (split temporal) |
+| VALIDATION_SIZE | 0.2 | 20% das interações intermediárias reservadas para validação (split temporal) |
+| RECOMMENDATION_K | 10 | Tamanho da lista de recomendações entregue ao usuário |
+
+## Hiperparâmetros dos modelos
+
+| Parâmetro | Modelo | Valor | Descrição |
+| --- | --- | --- | --- |
+| SVD_N_FACTORS | SVD | 50 | Número de fatores latentes |
+| MLP_EMBEDDING_DIM | MLP | 64 | Dimensão dos embeddings de usuário e item |
+| MLP_HIDDEN_DIMS | MLP | [128, 64] | Tamanho das camadas ocultas |
+| MLP_EPOCHS | MLP | 50 | Número máximo de épocas (early stopping pode interromper antes) |
+| MLP_LEARNING_RATE | MLP | 0.001 | Taxa de aprendizado |
+| MLP_BATCH_SIZE | MLP | 256 | Tamanho do batch |
+
+# Métricas de avaliação
+
+O intuito é agregar no ticket médio geral do cliente que já comprou (Não de uma compra específica), utilizando o histórico de interações do mesmo para recomendar produtos que ele tem mais chances de comprar.
+
+**interação principal (ground thruth):** "transaction"
+
+## Métricas dos modelos:
+
+| Métrica | O que mede | Interpretação |
+| --- | --- | --- |
+| Precision@K | Dos K recomendados, quantos o usuário interagiu (transaction) | 0 a 1, quanto maior melhor |
+| Recall@K | Dos itens interagidos (transaction), quantos foram recomendados | 0 a 1, quanto maior melhor |
+| NDCG@K | Qualidade da ordenação, penaliza acertos no final | 0 a 1, quanto maior melhor |
+| Hit Rate@K | % de usuários com pelo menos 1 acerto nos K recomendados | 0 a 1, quanto maior melhor |
+
+## Métricas de negócio:
+
+| Métrica | O que mede | Usa value? | Interpretação |
+| --- | --- | --- | --- |
+| Coverage | % do catálogo recomendado | Não | 0 a 1, quanto maior melhor |
+| Revenue@K | Soma do value dos itens recomendados que foram comprados | Sim | Quanto maior melhor (R$) |
 
 
 # Design patterns que vamos utilizar
 
-- Factory Method (RecommenderFactory)
 - Strategy (diferentes modelos de recomendação)
+    - Organiza a estrutura dos modelos, garantindo que todos tenham a mesma interface (fit, recommend, get_params)
 
+- Factory Method (RecommenderFactory)
+    - Permite criar instâncias de modelos dinamicamente com base em uma string de configuração
 
 # Estrutura de desenvolvimento
 

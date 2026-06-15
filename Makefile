@@ -10,7 +10,7 @@ PYTHON_INTERPRETER = python
 # COMMANDS                                                                      #
 #################################################################################
 
-.PHONY: help requirements create_environment test test-slow test-cov lint lint-fix lint-fix-unsafe format format-fix format-diff format-verbose check clean init stop
+.PHONY: help requirements create_environment test test-cov lint lint-fix lint-fix-unsafe format format-fix format-diff format-verbose check clean init stop
 
 .DEFAULT_GOAL := help
 
@@ -18,8 +18,7 @@ help:
 	@echo "Comandos disponíveis:"
 	@echo "  make requirements        - Instala dependências Python (uv sync)"
 	@echo "  make create_environment  - Cria ambiente virtual com uv"
-	@echo "  make test                - Roda testes rápidos (exclui slow/integration)"
-	@echo "  make test-slow           - Roda testes lentos/integração (ex: Databricks)"
+	@echo "  make test                - Roda testes com output verboso"
 	@echo "  make test-cov            - Roda testes com cobertura (relatório HTML)"
 	@echo "  make lint                - Verifica estilo do código com Ruff"
 	@echo "  make lint-fix            - Corrige automaticamente issues de linting"
@@ -47,10 +46,7 @@ create_environment:
 ## Testes
 
 test:
-	python -m pytest tests/ -v --no-cov -m "not slow and not integration"
-
-test-slow:
-	python -m pytest tests/ -v --no-cov -m "slow or integration"
+	python -m pytest tests/ -v --no-cov
 
 test-cov:
 	python -m pytest tests/ -v --cov=src --cov-report=html --cov-report=term

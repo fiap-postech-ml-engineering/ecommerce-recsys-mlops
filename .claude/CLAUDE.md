@@ -108,6 +108,7 @@ Use sempre essa fonte — não hardcode valores que já existem ali.
   finalizar o ciclo atual antes de seguir.
 - **Não incluir** a linha `Co-Authored-By: Claude ...` (ou qualquer menção ao Claude
   Code) no corpo dos commits.
+- **Sempre fazer `git push` depois de criar um commit.**
 
 ## Pendências conhecidas
 

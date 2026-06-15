@@ -106,6 +106,8 @@ Use sempre essa fonte — não hardcode valores que já existem ali.
   PR", etc). Se um novo pedido de implementação chegar antes do ciclo anterior ser
   fechado (check + commit), o Claude deve avisar que o escopo mudou e sugerir
   finalizar o ciclo atual antes de seguir.
+- **Não incluir** a linha `Co-Authored-By: Claude ...` (ou qualquer menção ao Claude
+  Code) no corpo dos commits.
 
 ## Pendências conhecidas
 

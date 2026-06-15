@@ -62,6 +62,12 @@ def configure_mlflow_tracking(
         if settings.DATABRICKS_TOKEN and "DATABRICKS_TOKEN" not in os.environ:
             os.environ["DATABRICKS_TOKEN"] = settings.DATABRICKS_TOKEN.get_secret_value()
 
+        if "DATABRICKS_HOST" not in os.environ or "DATABRICKS_TOKEN" not in os.environ:
+            logger.warning(
+                "MLFLOW_TRACKING_URI=databricks mas DATABRICKS_HOST/DATABRICKS_TOKEN não "
+                "estão configurados. Veja docs/internal/configuracao_mlflow.md."
+            )
+
         mlflow.set_tracking_uri(tracking_uri or "databricks")
 
         try:

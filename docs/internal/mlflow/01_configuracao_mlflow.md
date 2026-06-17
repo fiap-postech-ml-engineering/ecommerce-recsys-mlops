@@ -19,13 +19,14 @@ Edite o `.env` e preencha as variáveis da seção `=== MLflow / Databricks ===`
 MLFLOW_TRACKING_URI=databricks
 DATABRICKS_HOST=https://dbc-xxxxxxxx-xxxx.cloud.databricks.com/
 DATABRICKS_TOKEN=dapiXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-MLFLOW_EXPERIMENT_NAME="02 - ECOMM_RECSYS - Production"
+MLFLOW_EXPERIMENT_NAME=/Shared/mlflow_ecomm_recsys
 ```
 
 - `DATABRICKS_HOST` e `DATABRICKS_TOKEN` vêm do passo 2.
-- `MLFLOW_EXPERIMENT_NAME` é o nome do experimento compartilhado no workspace do
-  Databricks — manter o valor padrão de `.env.example`, a não ser que o time decida
-  criar um experimento próprio.
+- `MLFLOW_EXPERIMENT_NAME` é o path absoluto do experimento compartilhado no
+  workspace do Databricks (pasta `/Shared/...`, acessível a todo o time) — manter
+  o valor padrão de `.env.example`, a não ser que o time decida criar um
+  experimento próprio.
 
 O `.env` está no `.gitignore` — nunca commitar token real.
 

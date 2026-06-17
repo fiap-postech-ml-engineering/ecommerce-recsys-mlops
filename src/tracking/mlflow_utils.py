@@ -72,7 +72,7 @@ def configure_mlflow_tracking(
         if "DATABRICKS_HOST" not in os.environ or "DATABRICKS_TOKEN" not in os.environ:
             logger.warning(
                 "MLFLOW_TRACKING_URI=databricks mas DATABRICKS_HOST/DATABRICKS_TOKEN não "
-                "estão configurados. Veja docs/internal/configuracao_mlflow.md."
+                "estão configurados. Veja docs/internal/mlflow/01_configuracao_mlflow.md."
             )
 
         mlflow.set_tracking_uri(tracking_uri or "databricks")
@@ -282,7 +282,7 @@ def start_notebook_run(
 
     Raises:
         ValueError: If ``model_type`` or ``test_name`` are invalid.
-        RuntimeError: If the active experiment is not found (forgot to call
+        RuntimeError: If there is no active experiment (forgot to call
             ``configure_mlflow_tracking``).
     """
     _validate_notebook_run_inputs(model_type, test_name)
@@ -298,15 +298,15 @@ def start_notebook_run(
         extra_tags=extra_tags,
     )
 
-    exp_name = get_settings().MLFLOW_EXPERIMENT_NAME
-    experiment = MlflowClient().get_experiment_by_name(exp_name)
-    if experiment is None:
+    # Usa o experimento ativado por configure_mlflow_tracking()/mlflow.set_experiment(),
+    # não Settings.MLFLOW_EXPERIMENT_NAME — senão experiment_name explícito é ignorado.
+    experiment_id = mlflow.tracking.fluent._get_experiment_id()
+    if experiment_id is None:
         raise RuntimeError(
-            f"Experimento '{exp_name}' não encontrado. "
+            "Nenhum experimento MLflow ativo. "
             "Chame configure_mlflow_tracking() antes de start_notebook_run()."
         )
 
-    experiment_id = experiment.experiment_id
     parent1_id = _get_or_create_parent_run(model_type, experiment_id)
     parent2_id = _get_or_create_parent_run(
         run_group, experiment_id, {"mlflow.parentRunId": parent1_id}

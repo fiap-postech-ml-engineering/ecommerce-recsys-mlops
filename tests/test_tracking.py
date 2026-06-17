@@ -401,6 +401,42 @@ def test_start_notebook_run_logs_params_when_provided(tmp_path, monkeypatch):
     mlflow.set_tracking_uri("")
 
 
+def test_start_notebook_run_uses_configured_experiment_not_settings_default(tmp_path, monkeypatch):
+    """start_notebook_run deve respeitar o experiment_name passado para
+    configure_mlflow_tracking, mesmo quando difere de Settings.MLFLOW_EXPERIMENT_NAME."""
+    tracking_uri = f"sqlite:///{tmp_path}/mlflow.db"
+    mlflow.set_tracking_uri(tracking_uri)
+
+    monkeypatch.setattr("src.tracking.mlflow_utils._safe_git", lambda cmd: "test-user")
+    fake_settings = type(
+        "S",
+        (),
+        {
+            "MLFLOW_EXPERIMENT_NAME": "/Shared/exp-producao-no-env",
+            "MLFLOW_TRACKING_URI": "local",
+        },
+    )()
+    monkeypatch.setattr("src.tracking.mlflow_utils.get_settings", lambda: fake_settings)
+    # configure_mlflow_tracking(backend="local") sempre monta a tracking_uri a partir de
+    # db_path como filesystem store; mantemos a sqlite já configurada acima sobrescrevendo
+    # set_tracking_uri para não trocar de backend no meio do teste.
+    monkeypatch.setattr("src.tracking.mlflow_utils.mlflow.set_tracking_uri", lambda uri: None)
+
+    configure_mlflow_tracking(experiment_name="notebook-exploracao-mlp")
+
+    with start_notebook_run("mlp", "exploracao", phase="dev", dataset_name="retailrocket") as run:
+        run_experiment_id = run.info.experiment_id
+
+    client = MlflowClient()
+    configured_exp = client.get_experiment_by_name("notebook-exploracao-mlp")
+    settings_default_exp = client.get_experiment_by_name("/Shared/exp-producao-no-env")
+
+    assert run_experiment_id == configured_exp.experiment_id
+    assert settings_default_exp is None
+
+    mlflow.set_tracking_uri("")
+
+
 def test_start_notebook_run_no_params_does_not_log_params(tmp_path, monkeypatch):
     mlflow.set_tracking_uri(f"sqlite:///{tmp_path}/mlflow.db")
     mlflow.set_experiment("test-exp")

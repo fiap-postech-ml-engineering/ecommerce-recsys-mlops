@@ -12,27 +12,37 @@ e de `src/config.py` (`Settings`) — não duplique valores, sempre leia de lá.
 
 ## 1. Experimentos
 
-Use três experimentos lógicos, escolhidos via
+Use três experimentos lógicos, todos sob a pasta compartilhada
+`/Shared/mlflow_ecomm_recsys` (default de `Settings.MLFLOW_EXPERIMENT_NAME`,
+acessível a todo o time — não atrelar a um usuário específico), escolhidos via
 `configure_mlflow_tracking(experiment_name=...)`:
 
 ```
-02 - ECOMM_RECSYS - notebook_baselines_training
-02 - ECOMM_RECSYS - notebook_mlp_training
-02 - ECOMM_RECSYS - Production
+/Shared/mlflow_ecomm_recsys/02 - ECOMM_RECSYS - notebook_baselines_training
+/Shared/mlflow_ecomm_recsys/02 - ECOMM_RECSYS - notebook_mlp_training
+/Shared/mlflow_ecomm_recsys/02 - ECOMM_RECSYS - Production
 ```
 
 | Experimento | Quando usar |
 | --- | --- |
-| `02 - ECOMM_RECSYS - notebook_baselines_training` | Exploração em `notebooks/02_experiments.ipynb` dos baselines (Popularity, SVD) |
-| `02 - ECOMM_RECSYS - notebook_mlp_training` | Exploração em `notebooks/02_experiments.ipynb` do MLP (arquitetura, hiperparâmetros) |
-| `02 - ECOMM_RECSYS - Production` (default de `Settings.MLFLOW_EXPERIMENT_NAME`) | Runs "oficiais" disparadas por `src/training/train.py` / pipeline DVC: baseline, tuning, final |
+| `.../02 - ECOMM_RECSYS - notebook_baselines_training` | Exploração em `notebooks/02_experiments.ipynb` dos baselines (Popularity, SVD) |
+| `.../02 - ECOMM_RECSYS - notebook_mlp_training` | Exploração em `notebooks/02_experiments.ipynb` do MLP (arquitetura, hiperparâmetros) |
+| `/Shared/mlflow_ecomm_recsys` (default de `Settings.MLFLOW_EXPERIMENT_NAME`) | Runs "oficiais" disparadas por `src/training/train.py` / pipeline DVC: baseline, tuning, final |
 
-`configure_mlflow_tracking()` sem argumentos usa o experimento de produção. Para
-os notebooks de exploração, passe o nome explicitamente:
+`configure_mlflow_tracking()` sem argumentos usa o experimento de produção (default de
+`Settings.MLFLOW_EXPERIMENT_NAME`). Para os notebooks de exploração, passe o nome
+explicitamente — `start_notebook_run` (seção 3) respeita esse experimento, não o default
+do `.env`:
 
 ```python
-configure_mlflow_tracking(experiment_name="02 - ECOMM_RECSYS - notebook_mlp_training")
+configure_mlflow_tracking(
+    experiment_name="/Shared/mlflow_ecomm_recsys/02 - ECOMM_RECSYS - notebook_mlp_training"
+)
 ```
+
+A função também aceita `backend`, `tracking_uri`, `experiment_tags` e
+`artifact_root_path` (controle de backend local vs. Databricks) — ver
+`01_configuracao_mlflow.md` para esses parâmetros.
 
 -----
 
@@ -50,11 +60,18 @@ tags = build_experiment_tags(
     dataset_name="retailrocket",    # fixo, não muda
     dataset_dvc_version="a1b2c3d",  # opcional — "unknown" enquanto o DVC pipeline não existir
     run_group="mlp_sem_fe",         # opcional — use start_notebook_run nos notebooks (seção 3)
+    extra_tags=None,                # opcional — dict que sobrescreve qualquer tag acima, inclusive run_group
 )
 ```
 
 Tags retornadas: `model_type`, `phase`, `dataset_name`, `dataset_dvc_version`,
-`author` (via `git config user.name`), `run_group` (se fornecido).
+`author` (via `git config user.name`), `run_group` (se fornecido), além de quaisquer
+chaves passadas em `extra_tags` (que têm precedência sobre os demais parâmetros).
+
+> `build_experiment_tags()` **não valida** `model_type` — aceita qualquer string. A
+> validação estrita contra `"popularity"`/`"svd"`/`"mlp"` só ocorre dentro de
+> `start_notebook_run` (seção 3), que levanta `ValueError` para valores fora de
+> `ALLOWED_MODEL_TYPES` (`from src.tracking import ALLOWED_MODEL_TYPES`).
 
 > Tags como commit/branch/host/timestamp **não são adicionadas manualmente** —
 > o MLflow já registra `mlflow.source.git.commit` e `run.info.start_time`
@@ -112,7 +129,8 @@ O restante é derivado automaticamente:
 
 ### Regras para `model_type` e `test_name`
 
-**`model_type`** — deve ser um dos valores abaixo (exatamente como escrito):
+**`model_type`** — deve ser um dos valores abaixo (exatamente como escrito), validados
+contra `ALLOWED_MODEL_TYPES` (`from src.tracking import ALLOWED_MODEL_TYPES`):
 
 | Valor | Modelo |
 | --- | --- |
@@ -120,11 +138,17 @@ O restante é derivado automaticamente:
 | `"svd"` | SVD (scikit-surprise) |
 | `"mlp"` | MLP com embeddings (PyTorch) |
 
+Valor inválido levanta `ValueError`:
+
+```
+ValueError: model_type 'xgboost' inválido. Valores permitidos: ['mlp', 'popularity', 'svd']
+```
+
 **`test_name`** — descrição curta do teste. Regras:
-- Apenas letras **minúsculas**, números, hífens (`-`) e underscores (`_`)
+- Apenas letras **minúsculas**, números, hífens (`-`) e underscores (`_`) — não pode ser vazio
 - Sem espaços, sem maiúsculas, sem caracteres especiais
 - Exemplos válidos: `"sem-fe"`, `"com-fe-nf100"`, `"stratificado"`, `"cv-5fold"`
-- Exemplos inválidos: `"Sem FE"` ❌, `"com/fe"` ❌, `"nf 50"` ❌
+- Exemplos inválidos: `"Sem FE"` ❌, `"com/fe"` ❌, `"nf 50"` ❌, `""` ❌
 
 Se o valor for inválido, a função levanta um `ValueError` com mensagem clara:
 
@@ -154,7 +178,7 @@ from src.tracking import configure_mlflow_tracking, log_evaluation_metrics, star
 settings = get_settings()
 
 # FIXO — não alterar o nome do experimento
-configure_mlflow_tracking(experiment_name="02 - ECOMM_RECSYS - notebook_baselines_training")
+configure_mlflow_tracking(experiment_name="/Shared/mlflow_ecomm_recsys/02 - ECOMM_RECSYS - notebook_baselines_training")
 ```
 
 ```python
@@ -292,6 +316,11 @@ A UI do MLflow agrupa visualmente por prefixo ao comparar runs.
 | Comparação entre modelos (baselines vs. MLP) | `diagnostics/metrics_comparison.png` | runs `final` |
 | Model card | `model_card` | apenas runs `final` registradas |
 
+> `mlflow.log_dict(dictionary, artifact_file=...)` e `mlflow.log_artifact(local_path,
+> artifact_path=...)` são funções diferentes da API do MLflow com parâmetros de nome
+> diferente — `log_dict` usa `artifact_file`, `log_artifact` usa `artifact_path`. Não
+> trocar um pelo outro ao copiar exemplos.
+
 ```python
 with start_notebook_run(
     model_type, test_name,
@@ -305,8 +334,8 @@ with start_notebook_run(
 
     log_evaluation_metrics(model_metrics | business_metrics, k=settings.RECOMMENDATION_K)
 
-    mlflow.log_dict(model_metrics | business_metrics, "metrics.json")
-    mlflow.log_dict(id_mappings, "data/id_mappings.json")
+    mlflow.log_dict(model_metrics | business_metrics, artifact_file="metrics.json")
+    mlflow.log_dict(id_mappings, artifact_file="data/id_mappings.json")
 
     if hasattr(model, "training_history"):
         mlflow.log_artifact("training_curve.png", artifact_path="diagnostics")
@@ -323,7 +352,8 @@ with start_notebook_run(
 - [ ] `configure_mlflow_tracking(experiment_name=...)` chamado no início do notebook
 - [ ] `model_type` é um dos valores permitidos: `"popularity"`, `"svd"`, `"mlp"`
 - [ ] `test_name` segue `[a-z0-9_-]` — sem espaços, sem maiúsculas
-- [ ] Usar `start_notebook_run(model_type, test_name, phase, dataset_name, params=model.get_params())` — nunca `mlflow.start_run` direto nos notebooks
+- [ ] Usar `start_notebook_run(model_type, test_name, phase, dataset_name, dataset_dvc_version=None, extra_tags=None, params=model.get_params())` — nunca `mlflow.start_run` direto nos notebooks
+- [ ] `configure_mlflow_tracking()` foi chamado antes de `start_notebook_run` (senão levanta `RuntimeError: Nenhum experimento MLflow ativo`)
 - [ ] `mlflow.note.content` com descrição da run
 - [ ] Métricas logadas via `log_evaluation_metrics(metrics, k=settings.RECOMMENDATION_K)` — mínimo 4 para comparar com o MLP
 - [ ] Modelo logado com `signature` quando aplicável
@@ -352,7 +382,7 @@ from src.tracking import configure_mlflow_tracking, log_evaluation_metrics, star
 settings = get_settings()
 
 # FIXO — não alterar
-configure_mlflow_tracking(experiment_name="02 - ECOMM_RECSYS - notebook_baselines_training")
+configure_mlflow_tracking(experiment_name="/Shared/mlflow_ecomm_recsys/02 - ECOMM_RECSYS - notebook_baselines_training")
 
 # ADAPTAR conforme o teste sendo conduzido
 model_type = "popularity"
@@ -380,8 +410,8 @@ with start_notebook_run(
     business_metrics = evaluate_business_metrics(model, test_interactions, k=settings.RECOMMENDATION_K)
 
     log_evaluation_metrics(model_metrics | business_metrics, k=settings.RECOMMENDATION_K)  # FIXO
-    mlflow.log_dict(model_metrics | business_metrics, "metrics.json")
-    mlflow.log_dict(model.get_id_mappings(), "data/id_mappings.json")
+    mlflow.log_dict(model_metrics | business_metrics, artifact_file="metrics.json")
+    mlflow.log_dict(model.get_id_mappings(), artifact_file="data/id_mappings.json")
     mlflow.log_dict(model.get_ranking(), artifact_file="model/ranking.json")
 ```
 

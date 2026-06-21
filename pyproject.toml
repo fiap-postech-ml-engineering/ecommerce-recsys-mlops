@@ -19,8 +19,12 @@ requires-python = "~=3.13.0"
 dependencies = [
     "fastapi>=0.136.1",
     "kagglehub>=1.0.1",
+    "matplotlib>=3.11.0",
+    "numpy>=2.5.0",
+    "pandas>=3.0.3",
     "pydantic-settings>=2.14.1",
     "python-dotenv",
+    "seaborn>=0.13.2",
     "uvicorn>=0.47.0",
 ]
 

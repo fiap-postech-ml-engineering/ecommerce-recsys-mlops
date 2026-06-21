@@ -1,7 +1,7 @@
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import Field, SecretStr, field_validator, model_validator
+from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BASE_DIR = Path(__file__).parent.parent
@@ -43,7 +43,7 @@ class Settings(BaseSettings):
 
     # MLflow / Databricks
     MLFLOW_TRACKING_URI: str = Field(default="local")
-    MLFLOW_EXPERIMENT_NAME: str = Field(default="tc2-recsys")
+    MLFLOW_EXPERIMENT_NAME: str = Field(default="/Shared/mlflow_ecomm_recsys")
     DATABRICKS_HOST: str | None = Field(default=None)
     DATABRICKS_TOKEN: SecretStr | None = Field(default=None)
 
@@ -68,21 +68,6 @@ class Settings(BaseSettings):
         if v.upper() not in allowed:
             raise ValueError(f"LOG_LEVEL must be one of {allowed}")
         return v.upper()
-
-    @model_validator(mode="after")
-    def _validate_databricks(self) -> "Settings":
-        if self.MLFLOW_TRACKING_URI == "databricks":
-            missing = [
-                name
-                for name, val in [
-                    ("DATABRICKS_HOST", self.DATABRICKS_HOST),
-                    ("DATABRICKS_TOKEN", self.DATABRICKS_TOKEN),
-                ]
-                if not val
-            ]
-            if missing:
-                raise ValueError(f"MLFLOW_TRACKING_URI=databricks requires: {', '.join(missing)}")
-        return self
 
 
 @lru_cache(maxsize=1)

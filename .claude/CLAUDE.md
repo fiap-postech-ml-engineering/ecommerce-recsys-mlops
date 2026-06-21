@@ -109,6 +109,12 @@ Use sempre essa fonte — não hardcode valores que já existem ali.
 - **Não incluir** a linha `Co-Authored-By: Claude ...` (ou qualquer menção ao Claude
   Code) no corpo dos commits.
 - **Sempre fazer `git push` depois de criar um commit.**
+- **Commits sempre em branch própria** (`<tipo>/<slug-descritivo>`), nunca direto em
+  `main`. Se `git push` indicar que uma regra de proteção de branch foi *bypassada*
+  (ex: mensagem "Bypassed rule violations" / "Changes must be made through a pull
+  request"), isso significa que o push foi para `main` por engano — parar
+  imediatamente e perguntar ao usuário se ele quer continuar assim ou desfazer e
+  refazer em uma branch com PR.
 
 ## Pendências conhecidas
 

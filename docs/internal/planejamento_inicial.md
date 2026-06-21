@@ -128,7 +128,7 @@ O intuito é agregar no ticket médio geral do cliente que já comprou (Não de 
    └── split.py
         ↓
 3. src/tracking/
-   └── mlflow_utils.py   ← configure_mlflow_tracking, build_default_run_tags
+   └── mlflow_utils.py   ← configure_mlflow_tracking, build_experiment_tags
         ↓
 4. src/models/
    ├── base.py           ← BaseRecommender

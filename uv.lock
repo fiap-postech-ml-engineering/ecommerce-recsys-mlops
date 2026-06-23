@@ -299,7 +299,7 @@ dependencies = [
     { name = "uvicorn", marker = "(platform_machine == 'arm64' and sys_platform == 'darwin') or (platform_machine == 'x86_64' and sys_platform == 'darwin') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine == 'AMD64' and sys_platform == 'win32')" },
 ]
 
-[package.dev-dependencies]
+[package.optional-dependencies]
 dev = [
     { name = "ipykernel", marker = "(platform_machine == 'arm64' and sys_platform == 'darwin') or (platform_machine == 'x86_64' and sys_platform == 'darwin') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine == 'AMD64' and sys_platform == 'win32')" },
     { name = "pre-commit", marker = "(platform_machine == 'arm64' and sys_platform == 'darwin') or (platform_machine == 'x86_64' and sys_platform == 'darwin') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine == 'AMD64' and sys_platform == 'win32')" },
@@ -311,25 +311,22 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "fastapi", specifier = ">=0.136.1" },
+    { name = "ipykernel", marker = "extra == 'dev'", specifier = ">=7.2.0" },
     { name = "kagglehub", specifier = ">=1.0.2" },
     { name = "matplotlib", specifier = ">=3.11.0" },
     { name = "mlflow", specifier = ">=1.27.0" },
     { name = "numpy", specifier = ">=2.5.0" },
     { name = "pandas", specifier = ">=3.0.3" },
+    { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=4.6.0" },
     { name = "pydantic-settings", specifier = ">=2.14.1" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0.0" },
+    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=6.0.0" },
     { name = "python-dotenv" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.11.0" },
     { name = "seaborn", specifier = ">=0.13.2" },
     { name = "uvicorn", specifier = ">=0.47.0" },
 ]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "ipykernel", specifier = ">=7.2.0" },
-    { name = "pre-commit", specifier = ">=4.6.0" },
-    { name = "pytest", specifier = ">=8.0.0" },
-    { name = "pytest-cov", specifier = ">=6.0.0" },
-    { name = "ruff", specifier = ">=0.11.0" },
-]
+provides-extras = ["dev"]
 
 [[package]]
 name = "entrypoints"

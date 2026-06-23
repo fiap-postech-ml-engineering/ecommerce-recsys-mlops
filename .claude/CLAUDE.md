@@ -117,6 +117,11 @@ Sem o **MCP do Notion** configurado (ferramentas `mcp__claude_ai_Notion__*`), a 
 essas ferramentas não estiverem disponíveis, insista com o usuário para instalá-lo antes de
 seguir com o fluxo de tarefas — não tente adivinhar o estado do Kanban.
 
+**Aprovação obrigatória, em toda e qualquer hipótese**: tanto a mensagem de commit (skill
+`commit`) quanto o título/descrição do PR (skill `pr-description`) devem ser mostrados ao
+usuário e aprovados explicitamente antes de executar `git commit` ou `gh pr create`. Pedir
+para commitar ou abrir PR autoriza o ciclo, não dispensa a revisão do texto gerado.
+
 ### Setup local (uv, Makefile, terminal)
 
 Boa parte do time usa Windows e tem pouca familiaridade com terminal — reforce sempre,

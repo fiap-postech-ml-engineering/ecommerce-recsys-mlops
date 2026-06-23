@@ -27,6 +27,15 @@ pedido explícito.
 Se um novo pedido de implementação chegar antes do ciclo anterior ser fechado (check +
 commit), avisar que o escopo mudou e sugerir finalizar o ciclo atual antes de seguir.
 
+## Aprovação obrigatória da mensagem
+
+**Em toda e qualquer hipótese**, antes de rodar `git commit`, mostrar a mensagem de commit
+completa (já formatada conforme as regras abaixo) ao usuário e esperar aprovação explícita.
+Nunca rodar `git commit` direto sem esse passo — mesmo quando o usuário já pediu "commita"
+de forma genérica, isso autoriza o ciclo de commit, não dispensa a revisão da mensagem em
+si. Só prosseguir com `git commit` (e o `git push` subsequente) depois que o usuário
+confirmar ou ajustar o texto proposto.
+
 ## Regras do commit em si
 
 - **Não incluir** a linha `Co-Authored-By: Claude ...` (ou qualquer menção ao Claude Code)

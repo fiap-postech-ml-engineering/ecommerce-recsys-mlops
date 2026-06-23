@@ -75,3 +75,11 @@ Regras:
 - `Test plan` deve ser um checklist verificável (comandos do Makefile deste projeto:
   `make check`, `make test`, `make lint`, etc., ou passos manuais quando aplicável).
 - Linguagem: português, seguindo a convenção de commits do projeto.
+
+## Passo 5 — Aprovação obrigatória antes de abrir o PR
+
+**Em toda e qualquer hipótese**, mostrar o título e a descrição completos (já com a seção
+`## Related` resolvida pelo checklist do Passo 2) ao usuário e esperar aprovação explícita
+antes de rodar `gh pr create` ou qualquer comando que efetivamente abra o PR. Pedir para
+abrir o PR autoriza o fluxo, não dispensa a revisão do conteúdo gerado — só prosseguir depois
+que o usuário confirmar ou pedir ajustes no texto.

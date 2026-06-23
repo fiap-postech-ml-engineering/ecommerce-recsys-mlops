@@ -16,20 +16,32 @@ git log main..HEAD --oneline
 git diff main...HEAD --stat
 ```
 
-## Passo 2 — Identificar o ID da tarefa (opcional)
+## Passo 2 — Identificar o(s) ID(s) de tarefa e checar o checklist do Kanban
 
-Se o nome da branch seguir o padrão `<tipo>/<ID>-<slug>` (ex:
-`feat/TCF1-52-churn-dataset-dataloader`), extraia o `<ID>` (ex: `TCF1-52`).
+Antes de montar qualquer coisa, use a skill `notion-kanban` para confirmar os cards que este
+PR resolve:
 
-Se a branch não tiver esse padrão (ex: `feat/ajusta-readme`), **não há ID** — siga sem a
-seção `## Related` e sem prefixo no título.
+1. Se o nome da branch seguir o padrão `<tipo>/<ID>-<slug>` (ex:
+   `feat/TCF1-52-churn-dataset-dataloader`), extraia o `<ID>` (ex: `TCF1-52`) como candidato.
+2. Se a branch **não** tiver esse padrão, ou se o diff parecer tocar mais de um card,
+   pergunte ao usuário (ou consulte o Kanban via `notion-kanban`) se há outros cards
+   relacionados — não assuma que só existe um.
+3. Para cada card candidato, rode o **checklist obrigatório pré-PR** da skill
+   `notion-kanban`: só inclua no PR os cards que o trabalho da branch resolve **por
+   completo**. Se algum card estiver apenas parcialmente resolvido, não o referencie no PR —
+   avise o usuário e instrua a concluir o card primeiro.
+4. Se nenhum card sobreviver ao checklist (branch não relacionada a nenhum card do Kanban),
+   siga sem a seção `## Related`.
 
 ## Passo 3 — Montar o título
 
-- Com ID: `[<ID>] <descrição curta no imperativo>`
+- Com ID confirmado: `[<ID>] <descrição curta no imperativo>` (se houver mais de um ID,
+  `[<ID1>][<ID2>] <descrição>`)
 - Sem ID: `<descrição curta no imperativo>`
 
-A descrição curta resume o objetivo geral da branch (não é só o último commit).
+A descrição curta resume o objetivo geral da branch (não é só o último commit). O ID no
+título é só para legibilidade humana — **a integração com o Notion não lê o título**, lê a
+descrição (Passo 4).
 
 ## Passo 4 — Montar a descrição (template)
 
@@ -44,11 +56,19 @@ A descrição curta resume o objetivo geral da branch (não é só o último com
 - [ ] <como validar — ex: `make check`, testes específicos, execução manual>
 
 ## Related
-- <ID da tarefa, ex: TCF1-52>
+- Closes <ID>
 ```
 
 Regras:
-- `## Related` só aparece se houver ID de tarefa identificado no Passo 2. Se não houver,
+- A integração nativa Notion↔GitHub lê **magic words na descrição do PR**, não no título.
+  Use um magic word por ID confirmado no checklist do Passo 2:
+  - `Closes <ID>` (ou `Fixes`/`Resolves`/`Completes`) quando o card está 100% resolvido por
+    este PR — o card é movido para concluído quando o PR for mergeado.
+  - `Part of <ID>` (ou `Ref`/`Related to`/`Towards`) quando o PR só contribui para o card
+    sem finalizá-lo — não fecha o card automaticamente.
+  - Para múltiplos cards, uma linha por ID: `## Related` pode ter vários bullets, cada um
+    com seu próprio magic word (ex: `Closes TCF1-52`, `Closes TCF1-53`).
+- `## Related` só aparece se houver ao menos um ID confirmado no Passo 2. Se não houver,
   omita a seção inteira.
 - `Summary` foca no "porquê"/objetivo; `Changes` foca no "o quê" (arquivos, módulos,
   decisões técnicas). Não repita a lista de commits literalmente — sintetize.

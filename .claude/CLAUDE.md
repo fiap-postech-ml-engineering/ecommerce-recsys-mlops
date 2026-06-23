@@ -94,27 +94,45 @@ Use sempre essa fonte — não hardcode valores que já existem ali.
 - Reprodutibilidade: usar sempre `RANDOM_SEED` de `Settings`, não fixar seeds soltas no
   código.
 
-## Git: commits, branches e PRs
+## Orquestração do fluxo de desenvolvimento
 
-- Commits no formato `<tipo>(<escopo>): <descrição no imperativo, em português>`
-  (`feat`/`fix`/`refactor`/`test`/`docs`/`chore`), pequenos e por responsabilidade lógica.
-- Branches: `<tipo>/<slug-descritivo>`, com `-<ID-da-tarefa>` opcional quando houver
-  card no Kanban (ex: `feat/TCF1-52-churn-dataset-dataloader`).
-- Ao abrir PR, usar a skill `pr-description` para gerar título e corpo em Markdown.
-- **Fluxo de trabalho com o Claude Code**: implementar → usuário valida → só rodar
-  `make check` e criar commit/PR quando solicitado explicitamente ("commita", "abre
-  PR", etc). Se um novo pedido de implementação chegar antes do ciclo anterior ser
-  fechado (check + commit), o Claude deve avisar que o escopo mudou e sugerir
-  finalizar o ciclo atual antes de seguir.
-- **Não incluir** a linha `Co-Authored-By: Claude ...` (ou qualquer menção ao Claude
-  Code) no corpo dos commits.
-- **Sempre fazer `git push` depois de criar um commit.**
-- **Commits sempre em branch própria** (`<tipo>/<slug-descritivo>`), nunca direto em
-  `main`. Se `git push` indicar que uma regra de proteção de branch foi *bypassada*
-  (ex: mensagem "Bypassed rule violations" / "Changes must be made through a pull
-  request"), isso significa que o push foi para `main` por engano — parar
-  imediatamente e perguntar ao usuário se ele quer continuar assim ou desfazer e
-  refazer em uma branch com PR.
+O ciclo de uma tarefa passa por etapas distintas, cada uma delegada a uma skill — isso é o
+que uma pessoa nova ao projeto precisa seguir, do Kanban até o PR mergeado:
+
+| Etapa do fluxo | Skill | Quando acionar |
+| --- | --- | --- |
+| Etapa de planejamento | `grill-me` | Sempre quando estiver na fase de planejamento, antes de implementar |
+| Consultar/mover tarefa no Kanban (Notion) | `notion-kanban` | Início do trabalho (pegar card, marcar "Em andamento") e antes de qualquer PR (checklist de cards 100% finalizados) |
+| Commitar e abrir branch | `commit` | Sempre que o usuário pedir explicitamente para commitar (após `make check`) |
+| Abrir PR | `pr-description` | Ao abrir PR — gera título/descrição e referencia os cards via magic words na seção `Related`, só após o checklist da `notion-kanban` confirmar que estão concluídos |
+
+O card só é movido para "Pull Request" e depois "Concluído" pela **integração nativa
+Notion↔GitHub** (lida pelos magic words que a skill `pr-description` escreve na descrição do
+PR) — nenhuma skill deste projeto tenta mover esses status manualmente, para não conflitar
+com essa automação. O papel das skills é garantir que o PR está bem formado e que nenhum
+card foi esquecido ou referenciado antes de estar de fato completo.
+
+Sem o **MCP do Notion** configurado (ferramentas `mcp__claude_ai_Notion__*`), a skill
+`notion-kanban` não funciona e o checklist pré-PR não pode ser feito de forma confiável. Se
+essas ferramentas não estiverem disponíveis, insista com o usuário para instalá-lo antes de
+seguir com o fluxo de tarefas — não tente adivinhar o estado do Kanban.
+
+### Setup local (uv, Makefile, terminal)
+
+Boa parte do time usa Windows e tem pouca familiaridade com terminal — reforce sempre,
+verbalmente, que `uv` + `Makefile` são a stack oficial deste projeto (não proponha
+alternativas como scripts `.bat` a não ser que o usuário peça explicitamente). Recomende
+WSL para quem está no Windows, mas reconheça que nem todo mundo consegue instalar — nesses
+casos, ajude a rodar os comandos equivalentes (`uv sync`, `uv run pytest`, etc.) diretamente,
+sem o Makefile.
+
+## Modelo e esforço do agente
+
+- Agente principal do projeto: **Sonnet 4.6, esforço médio** — usar para o trabalho de
+  desenvolvimento do dia a dia (implementação, testes, fluxo de PR).
+- Para tarefas muito leves que não dependem de performance ou de entrega (tirar dúvidas
+  simples, explicar um conceito pontual), pode-se usar um agente mais leve a critério do
+  Claude. Esta é uma diretriz textual, sem enforcement automático.
 
 ## Pendências conhecidas
 

@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from src.api.middleware import register_observability_middleware
 from src.config import get_settings
 
 
@@ -18,6 +19,8 @@ app = FastAPI(
     version=settings.MODEL_VERSION,
     lifespan=lifespan,
 )
+
+register_observability_middleware(app)
 
 
 @app.get("/")

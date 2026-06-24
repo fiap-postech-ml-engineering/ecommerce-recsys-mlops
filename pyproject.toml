@@ -129,3 +129,8 @@ environments = [
     "sys_platform == 'linux' and platform_machine == 'x86_64'",
     "sys_platform == 'win32' and platform_machine == 'AMD64'",
 ]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+]

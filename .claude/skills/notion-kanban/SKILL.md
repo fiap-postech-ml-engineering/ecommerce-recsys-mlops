@@ -1,6 +1,7 @@
 ---
 name: notion-kanban
 description: Consulta e atualiza o Kanban do projeto no Notion (pegar tarefa, marcar "Em andamento", checklist pré-PR). Use ao iniciar uma tarefa, ao conferir o status de um card, ou antes de abrir qualquer PR.
+model: claude-haiku-4-5-20251001
 ---
 
 # Kanban do projeto (Notion)

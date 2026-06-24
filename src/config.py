@@ -44,7 +44,7 @@ class Settings(BaseSettings):
     MLP_BATCH_SIZE: int = Field(default=256, gt=0)
 
     # MLflow / Databricks
-    MLFLOW_TRACKING_URI: str = Field(default="local")
+    MLFLOW_TRACKING_URI: str = Field(default="databricks")
     MLFLOW_EXPERIMENT_NAME: str = Field(default="/Shared/mlflow_ecomm_recsys")
     DATABRICKS_HOST: str | None = Field(default=None)
     DATABRICKS_TOKEN: SecretStr | None = Field(default=None)

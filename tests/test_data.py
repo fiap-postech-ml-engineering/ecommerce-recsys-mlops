@@ -46,9 +46,9 @@ def test_consolidate_dataset_builds_expected_schema():
 
     result = _consolidate_dataset(events, item_properties)
 
-    assert list(result.columns) == ["user_id", "item_id", "score", "value", "timestamp"]
+    assert list(result.columns) == ["user_id", "item_id", "event", "value", "timestamp"]
     assert set(result["item_id"]) == {1}
-    assert sorted(result["score"]) == [1, 3]
+    assert sorted(result["event"]) == ["transaction", "view"]
     assert (result["value"] == 200.0).all()
 
 
@@ -93,7 +93,7 @@ def test_load_dataset_uses_cache_when_present(tmp_path, monkeypatch):
         {
             "user_id": [1],
             "item_id": [2],
-            "score": [1],
+            "event": ["view"],
             "value": [10.0],
             "timestamp": pd.to_datetime(["2020-01-01"]),
         }
@@ -120,7 +120,7 @@ def test_load_dataset_builds_and_caches_when_missing(tmp_path, monkeypatch):
         {
             "user_id": [1],
             "item_id": [2],
-            "score": [3],
+            "event": ["transaction"],
             "value": [10.0],
             "timestamp": pd.to_datetime(["2020-01-01"]),
         }
@@ -142,5 +142,5 @@ def test_load_dataset_against_real_raw_files():
     if any(not (raw_dir / f).exists() for f in RAW_FILENAMES):
         pytest.skip("Arquivos raw do RetailRocket não encontrados localmente")
     dataset = load_dataset(force_rebuild=True)
-    assert set(dataset.columns) == {"user_id", "item_id", "score", "value", "timestamp"}
-    assert dataset["score"].isin([1, 2, 3]).all()
+    assert set(dataset.columns) == {"user_id", "item_id", "event", "value", "timestamp"}
+    assert dataset["event"].isin(["view", "addtocart", "transaction"]).all()

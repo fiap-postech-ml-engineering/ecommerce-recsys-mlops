@@ -20,7 +20,6 @@ RAW_FILENAMES = (
 KAGGLE_DATASET_HANDLE = "retailrocket/ecommerce-dataset"
 PROCESSED_FILENAME = "dataset_consolidated.csv"
 VALUE_PROPERTY_CODE = "790"
-EVENT_SCORE_MAP = {"view": 1, "addtocart": 2, "transaction": 3}
 
 
 def _ensure_raw_dataset(raw_dir: Path) -> None:
@@ -93,26 +92,25 @@ def _extract_latest_item_values(item_properties: pd.DataFrame) -> pd.Series:
 
 
 def _consolidate_dataset(events: pd.DataFrame, item_properties: pd.DataFrame) -> pd.DataFrame:
-    """Consolida eventos e valores de item no schema final do dataset.
+    """Consolida eventos e valores de item no schema bruto do dataset.
 
     Args:
         events: Tabela de eventos com colunas ``visitorid``, ``itemid``, ``event``, ``datetime``.
         item_properties: Tabela de propriedades de item.
 
     Returns:
-        DataFrame com colunas ``user_id``, ``item_id``, ``score``, ``value``, ``timestamp``.
+        DataFrame com colunas ``user_id``, ``item_id``, ``event``, ``value``, ``timestamp``.
     """
     item_values = _extract_latest_item_values(item_properties)
 
     dataset = events[["visitorid", "itemid", "event", "datetime"]].copy()
-    dataset["score"] = dataset["event"].map(EVENT_SCORE_MAP)
     dataset["value"] = dataset["itemid"].map(item_values)
     dataset = dataset.dropna(subset=["value"])
 
     dataset = dataset.rename(
         columns={"visitorid": "user_id", "itemid": "item_id", "datetime": "timestamp"}
     )
-    return dataset[["user_id", "item_id", "score", "value", "timestamp"]]
+    return dataset[["user_id", "item_id", "event", "value", "timestamp"]]
 
 
 def load_dataset(force_rebuild: bool = False) -> pd.DataFrame:
@@ -123,7 +121,7 @@ def load_dataset(force_rebuild: bool = False) -> pd.DataFrame:
             dataset a partir dos arquivos brutos (baixando-os se necessário).
 
     Returns:
-        DataFrame consolidado com colunas ``user_id``, ``item_id``, ``score``, ``value``,
+        DataFrame consolidado com colunas ``user_id``, ``item_id``, ``event``, ``value``,
         ``timestamp``.
     """
     processed_path = DATA_DIR / "processed" / PROCESSED_FILENAME

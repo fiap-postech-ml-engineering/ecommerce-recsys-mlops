@@ -9,6 +9,7 @@ O Kanban de desenvolvimento vive no hub de conhecimento do time no Notion:
 
 - Hub: `https://app.notion.com/p/guda-programming/FIAP-Machine-Learning-Engineering-31a59f34b75280478656cde68ea4c493`
 - Dataset (Kanban) ID: `60f478d5-6e29-4639-89d9-702706b2bf54`
+- Projeto (Propriedade): Tech Challenge Fase 2
 
 ## Pré-requisito: MCP do Notion
 

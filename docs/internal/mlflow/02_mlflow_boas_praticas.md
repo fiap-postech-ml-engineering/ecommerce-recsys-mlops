@@ -12,9 +12,9 @@ e de `src/config.py` (`Settings`) — não duplique valores, sempre leia de lá.
 
 ## 1. Experimentos
 
-Use três experimentos lógicos, todos sob a pasta compartilhada
-`/Shared/mlflow_ecomm_recsys` (default de `Settings.MLFLOW_EXPERIMENT_NAME`,
-acessível a todo o time — não atrelar a um usuário específico), escolhidos via
+`/Shared/mlflow_ecomm_recsys` é apenas a **pasta-container**, compartilhada com todo o
+time (não atrelada a um usuário específico) — ela mesma nunca é um experimento MLflow,
+só guarda os três experimentos canônicos do projeto, escolhidos via
 `configure_mlflow_tracking(experiment_name=...)`:
 
 ```
@@ -27,7 +27,7 @@ acessível a todo o time — não atrelar a um usuário específico), escolhidos
 | --- | --- |
 | `.../02 - ECOMM_RECSYS - notebook_baselines_training` | Exploração em `notebooks/02_experiments.ipynb` dos baselines (Popularity, SVD) |
 | `.../02 - ECOMM_RECSYS - notebook_mlp_training` | Exploração em `notebooks/02_experiments.ipynb` do MLP (arquitetura, hiperparâmetros) |
-| `/Shared/mlflow_ecomm_recsys` (default de `Settings.MLFLOW_EXPERIMENT_NAME`) | Runs "oficiais" disparadas por `src/training/train.py` / pipeline DVC: baseline, tuning, final |
+| `.../02 - ECOMM_RECSYS - Production` (default de `Settings.MLFLOW_EXPERIMENT_NAME`) | Runs "oficiais" disparadas por `src/training/train.py` / pipeline DVC: baseline, tuning, final |
 
 `configure_mlflow_tracking()` sem argumentos usa o experimento de produção (default de
 `Settings.MLFLOW_EXPERIMENT_NAME`). Para os notebooks de exploração, passe o nome

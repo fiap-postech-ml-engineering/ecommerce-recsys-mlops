@@ -87,8 +87,12 @@ Use sempre essa fonte — não hardcode valores que já existem ali.
 
 - Python 3.13, type hints obrigatórios em funções públicas, docstrings Google style.
 - Funções ≤ 20 linhas (requisito do desafio).
-- Ruff já configurado (line-length=99, regras E/F/I/N/W) — rode `make lint` e
+- Ruff já configurado (line-length=99, regras E/F/I/N/W/T20) — rode `make lint` e
   `make format-fix` antes de finalizar qualquer alteração. Pre-commit já ativo.
+- **Logging, não `print()`** — use sempre `logging` (configurado em `src/logging_config.py`)
+  em `src/` e `tests/`. A regra `T20` do ruff bloqueia `print()` nesses diretórios. Exceção:
+  notebooks (`notebooks/*.ipynb`), onde `print()`/output de célula é aceitável para
+  exploração.
 - Testes em `tests/`, markers `unit`/`integration`/`model`/`api`/`slow`, cobertura mínima
   70% sobre `src/`.
 - Reprodutibilidade: usar sempre `RANDOM_SEED` de `Settings`, não fixar seeds soltas no

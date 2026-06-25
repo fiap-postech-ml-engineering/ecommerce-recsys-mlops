@@ -21,6 +21,8 @@ class Settings(BaseSettings):
     # App
     APP_ENV: str = Field(default="development")
     LOG_LEVEL: str = Field(default="INFO")
+    LOG_FORMAT: str = Field(default="text")
+    LATENCY_WARN_MS: int = Field(default=1000, gt=0)
     API_HOST: str = Field(default="0.0.0.0")
     API_PORT: int = Field(default=8000)
     MODEL_VERSION: str = Field(default="0.1.0")
@@ -42,7 +44,7 @@ class Settings(BaseSettings):
     MLP_BATCH_SIZE: int = Field(default=256, gt=0)
 
     # MLflow / Databricks
-    MLFLOW_TRACKING_URI: str = Field(default="local")
+    MLFLOW_TRACKING_URI: str = Field(default="databricks")
     MLFLOW_EXPERIMENT_NAME: str = Field(default="/Shared/mlflow_ecomm_recsys")
     DATABRICKS_HOST: str | None = Field(default=None)
     DATABRICKS_TOKEN: SecretStr | None = Field(default=None)
@@ -69,7 +71,19 @@ class Settings(BaseSettings):
             raise ValueError(f"LOG_LEVEL must be one of {allowed}")
         return v.upper()
 
+    @field_validator("LOG_FORMAT")
+    @classmethod
+    def _validate_log_format(cls, v: str) -> str:
+        allowed = {"json", "text"}
+        if v.lower() not in allowed:
+            raise ValueError(f"LOG_FORMAT must be one of {allowed}")
+        return v.lower()
+
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
-    return Settings()
+    from src.logging_config import setup_logging
+
+    settings = Settings()
+    setup_logging(settings)
+    return settings

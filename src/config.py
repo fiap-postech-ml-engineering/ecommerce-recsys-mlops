@@ -45,7 +45,9 @@ class Settings(BaseSettings):
 
     # MLflow / Databricks
     MLFLOW_TRACKING_URI: str = Field(default="databricks")
-    MLFLOW_EXPERIMENT_NAME: str = Field(default="/Shared/mlflow_ecomm_recsys")
+    MLFLOW_EXPERIMENT_NAME: str = Field(
+        default="/Shared/mlflow_ecomm_recsys/02 - ECOMM_RECSYS - Production"
+    )
     DATABRICKS_HOST: str | None = Field(default=None)
     DATABRICKS_TOKEN: SecretStr | None = Field(default=None)
 

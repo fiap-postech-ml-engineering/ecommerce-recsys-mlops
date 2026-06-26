@@ -6,6 +6,9 @@ from src.models.base import BaseRecommender
 class PopularityRecommender(BaseRecommender):
     """Baseline que recomenda os itens mais populares, sem personalização."""
 
+    def __init__(self, config: dict | None = None) -> None:
+        self.config = config or {}
+
     def fit(self, interactions: pd.DataFrame) -> None:
         raise NotImplementedError
 

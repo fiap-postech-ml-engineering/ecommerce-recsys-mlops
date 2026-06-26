@@ -2,6 +2,7 @@ import pandas as pd
 import pytest
 
 from src.models.base import BaseRecommender
+from src.models.factory import RecommenderFactory
 from src.models.mlp import MLPRecommender
 from src.models.popularity import PopularityRecommender
 from src.models.svd import SVDRecommender
@@ -44,3 +45,36 @@ def test_concrete_subclass_implements_strategy_interface():
 )
 def test_baseline_stubs_are_declared_as_base_recommender_subclasses(recommender_cls):
     assert issubclass(recommender_cls, BaseRecommender)
+
+
+@pytest.mark.unit
+@pytest.mark.model
+@pytest.mark.parametrize(
+    ("name", "expected_cls"),
+    [
+        ("popularity", PopularityRecommender),
+        ("svd", SVDRecommender),
+        ("mlp", MLPRecommender),
+    ],
+)
+def test_factory_creates_instance_of_correct_class(name, expected_cls):
+    model = RecommenderFactory.create(name, {})
+
+    assert isinstance(model, expected_cls)
+
+
+@pytest.mark.unit
+@pytest.mark.model
+def test_factory_raises_value_error_on_unknown_model():
+    with pytest.raises(ValueError, match="Modelo desconhecido"):
+        RecommenderFactory.create("invalido", {})
+
+
+@pytest.mark.unit
+@pytest.mark.model
+def test_factory_passes_config_to_constructor():
+    config = {"n_factors": 50}
+
+    model = RecommenderFactory.create("svd", config)
+
+    assert model.config == config

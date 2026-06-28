@@ -23,6 +23,7 @@ dependencies = [
     "mlflow>=3.0.0",
     "numpy>=2.5.0",
     "pandas<3",
+    "pandera>=0.32.0",
     "pydantic-settings>=2.14.1",
     "python-dotenv",
     "scikit-learn>=1.9.0",

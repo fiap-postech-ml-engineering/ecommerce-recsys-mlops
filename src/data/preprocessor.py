@@ -3,6 +3,8 @@
 import pandas as pd
 from sklearn.pipeline import FunctionTransformer, Pipeline
 
+from src.data.schema import validate_interactions
+
 EVENT_WEIGHTS = {"view": 1, "addtocart": 2, "transaction": 3}
 
 
@@ -25,7 +27,7 @@ def build_interactions(events: pd.DataFrame) -> pd.DataFrame:
         value=("value", "first"),
         timestamp=("timestamp", "max"),
     )
-    return interactions
+    return validate_interactions(interactions)
 
 
 def build_preprocessing_pipeline() -> Pipeline:

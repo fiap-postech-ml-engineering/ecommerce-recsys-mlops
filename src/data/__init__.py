@@ -1,5 +1,10 @@
 from .loader import load_dataset
-from .preprocessor import build_interactions, build_preprocessing_pipeline
+from .preprocessor import (
+    BasePreprocessor,
+    WeightedInteractionPreprocessor,
+    build_interactions,
+    build_preprocessing_pipeline,
+)
 from .schema import (
     INTERACTIONS_SCHEMA,
     RAW_EVENTS_SCHEMA,
@@ -9,8 +14,10 @@ from .schema import (
 from .split import temporal_split
 
 __all__ = [
+    "BasePreprocessor",
     "INTERACTIONS_SCHEMA",
     "RAW_EVENTS_SCHEMA",
+    "WeightedInteractionPreprocessor",
     "build_interactions",
     "build_preprocessing_pipeline",
     "load_dataset",

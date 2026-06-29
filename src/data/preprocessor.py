@@ -5,6 +5,8 @@ from abc import ABC, abstractmethod
 import pandas as pd
 from sklearn.pipeline import FunctionTransformer, Pipeline
 
+from src.data.schema import validate_interactions
+
 EVENT_WEIGHTS = {"view": 1, "addtocart": 2, "transaction": 3}
 
 
@@ -58,7 +60,7 @@ def build_interactions(events: pd.DataFrame) -> pd.DataFrame:
         DataFrame com colunas ``user_id``, ``item_id``, ``score``, ``value``, ``timestamp``,
         uma linha por par usuário-item.
     """
-    return WeightedInteractionPreprocessor().transform(events)
+    return validate_interactions(WeightedInteractionPreprocessor().transform(events))
 
 
 def build_preprocessing_pipeline(preprocessor: BasePreprocessor | None = None) -> Pipeline:

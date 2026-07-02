@@ -10,7 +10,7 @@ PYTHON_INTERPRETER = python
 # COMMANDS                                                                      #
 #################################################################################
 
-.PHONY: help requirements create_environment test test-slow test-cov lint lint-fix lint-fix-unsafe format format-fix format-diff format-verbose check check-slow clean init stop
+.PHONY: help requirements create_environment test test-slow test-cov lint lint-fix lint-fix-unsafe format format-fix format-diff format-verbose check check-slow clean init docker-build docker-up docker-up-detached docker-down docker-logs docker-check stop
 
 .DEFAULT_GOAL := help
 
@@ -31,8 +31,14 @@ help:
 	@echo "  make check               - Executa lint, format e testes (sequencial, exclui slow)"
 	@echo "  make check-slow          - Executa lint, format e todos os testes (incluindo slow)"
 	@echo "  make clean               - Remove arquivos temporários"
-	@echo "  make init                - Inicia API em background"
-	@echo "  make stop                - Para API"
+	@echo "  make init                - Inicia API local com uvicorn"
+	@echo "  make stop                - Para serviços Docker"
+	@echo "  make docker-build        - Builda os serviços Docker"
+	@echo "  make docker-up           - Sobe os serviços Docker"
+	@echo "  make docker-up-detached  - Sobe os serviços Docker em background"
+	@echo "  make docker-down         - Para e remove os containers"
+	@echo "  make docker-logs         - Mostra logs do serviço app"
+	@echo "  make docker-check        - Sobe, valida a API e derruba os containers"
 
 ## Dependências
 
@@ -102,5 +108,26 @@ clean:
 #################################################################################
 
 init:
-	uv run uvicorn src.api:app --reload
-	@echo "API iniciada. Acesse em http://localhost:8000"
+	uv run uvicorn src.api.app:app --host 0.0.0.0 --port 8000 --reload
+
+docker-build:
+	docker compose build
+
+docker-up:
+	docker compose up
+
+docker-up-detached:
+	docker compose up -d
+
+docker-down:
+	docker compose down
+
+docker-logs:
+	docker compose logs -f app
+
+docker-check:
+	docker compose up -d --build
+	curl http://localhost:8000/
+	docker compose down
+
+stop: docker-down

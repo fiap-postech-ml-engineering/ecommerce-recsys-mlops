@@ -16,18 +16,30 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
 FROM base AS builder
 
 COPY pyproject.toml uv.lock LICENSE README.md ./
+COPY src ./src
 
 RUN uv sync --frozen --no-dev
 
 
-FROM base AS runtime
+FROM python:3.13-slim AS runtime
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PATH="/app/.venv/bin:$PATH"
+
+WORKDIR /app
+
+RUN addgroup --system app \
+    && adduser --system --ingroup app app
 
 COPY --from=builder /app/.venv /app/.venv
-
-ENV PATH="/app/.venv/bin:$PATH"
-
 COPY src ./src
-COPY README.md pyproject.toml LICENSE ./
+COPY pyproject.toml README.md LICENSE ./
+
+RUN mkdir -p /app/data /app/models /app/logs \
+    && chown -R app:app /app
+
+USER app
 
 EXPOSE 8000
 

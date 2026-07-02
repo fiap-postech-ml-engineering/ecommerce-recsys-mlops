@@ -53,6 +53,15 @@ uv run pre-commit install
 uv run pre-commit run --all-files
 ```
 
+Configure o remote local do DVC (necessário antes de rodar `dvc push`/`dvc pull` — cada
+pessoa aponta para uma pasta no próprio disco, fora do repositório; esse comando não é
+compartilhado via Git, então rode-o uma vez por máquina):
+```bash
+dvc remote add -d localremote ~/dvc-storage --local
+```
+> Esse remote é local/individual, só para validar o fluxo do DVC nesta etapa do projeto.
+> O remote compartilhado (S3/DBFS) será configurado em uma etapa futura.
+
 ## 📁 Organização do projeto
 
 ```

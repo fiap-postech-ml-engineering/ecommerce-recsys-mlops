@@ -1,3 +1,5 @@
+# Base comum usada pelos stages de build.
+# Mantém configurações globais do Python e instala o uv.
 FROM python:3.13-slim AS base
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -13,6 +15,8 @@ RUN apt-get update \
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
 
 
+# Stage responsável por resolver e instalar dependências.
+# Tudo que é necessário apenas para build fica fora da imagem final.
 FROM base AS builder
 
 COPY pyproject.toml uv.lock LICENSE README.md ./
@@ -21,6 +25,8 @@ COPY src ./src
 RUN uv sync --frozen --no-dev
 
 
+# Stage final da aplicação.
+# Recebe somente o ambiente resolvido e o código necessário para execução.
 FROM python:3.13-slim AS runtime
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -29,6 +35,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
+# Usuário não-root reduz riscos caso a aplicação tenha alguma falha.
 RUN addgroup --system app \
     && adduser --system --ingroup app app
 

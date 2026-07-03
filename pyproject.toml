@@ -28,6 +28,7 @@ dependencies = [
     "pydantic-settings>=2.14.1",
     "python-dotenv",
     "scikit-learn>=1.9.0",
+    "scikit-surprise>=1.1.5",
     "seaborn>=0.13.2",
     "uvicorn>=0.47.0",
 ]

@@ -127,3 +127,54 @@ def test_popularity_recommender_get_params():
     model = PopularityRecommender()
 
     assert model.get_params() == {"model": "popularity"}
+
+
+def _make_svd_interactions() -> pd.DataFrame:
+    return pd.DataFrame(
+        {
+            "user_id": [1, 1, 2, 2, 3, 3, 1],
+            "item_id": [10, 20, 10, 30, 20, 30, 30],
+            "score": [3, 1, 2, 3, 1, 2, 1],
+        }
+    )
+
+
+@pytest.mark.unit
+@pytest.mark.model
+def test_svd_recommender_recommend_excludes_items_seen_in_training():
+    interactions = _make_svd_interactions()
+    model = SVDRecommender({"n_factors": 2, "n_epochs": 2})
+    model.fit(interactions)
+
+    recs = model.recommend(user_id=1, k=5)
+
+    assert set(recs).isdisjoint({10, 20, 30})
+
+
+@pytest.mark.unit
+@pytest.mark.model
+def test_svd_recommender_recommend_respects_k():
+    interactions = _make_svd_interactions()
+    model = SVDRecommender({"n_factors": 2, "n_epochs": 2})
+    model.fit(interactions)
+
+    assert len(model.recommend(user_id=999, k=2)) == 2
+
+
+@pytest.mark.unit
+@pytest.mark.model
+def test_svd_recommender_get_params_reflects_config():
+    model = SVDRecommender({"n_factors": 7, "n_epochs": 3})
+
+    assert model.get_params() == {"model": "svd", "n_factors": 7, "n_epochs": 3}
+
+
+@pytest.mark.unit
+@pytest.mark.model
+def test_svd_recommender_uses_settings_defaults_when_config_omits_values():
+    model = SVDRecommender({})
+
+    params = model.get_params()
+
+    assert params["n_factors"] > 0
+    assert params["n_epochs"] > 0

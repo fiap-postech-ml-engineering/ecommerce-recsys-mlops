@@ -57,7 +57,13 @@ Configure o remote local do DVC (necessário antes de rodar `dvc push`/`dvc pull
 pessoa aponta para uma pasta no próprio disco, fora do repositório; esse comando não é
 compartilhado via Git, então rode-o uma vez por máquina):
 ```bash
+# IMPORTANTE: O dataset precisa estar identico entre todos os usuarios, caso tenha dúvidas sobre o estado da sua pasta de dados, rode o make dataset para obter uma versão atualizada
+
+# Use make dvc ou simplemente execute os comandos abaixos
+
 dvc remote add -d localremote ~/dvc-storage --local
+dvc commit data/raw.dvc
+dvc push
 ```
 > Esse remote é local/individual, só para validar o fluxo do DVC nesta etapa do projeto.
 > O remote compartilhado (S3/DBFS) será configurado em uma etapa futura.

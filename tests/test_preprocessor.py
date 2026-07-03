@@ -3,6 +3,8 @@ import pandas as pd
 from src.data.preprocessor import (
     BasePreprocessor,
     WeightedInteractionPreprocessor,
+    _extract_latest_item_values,
+    build_dataset,
     build_interactions,
     build_preprocessing_pipeline,
 )
@@ -99,3 +101,44 @@ def test_build_preprocessing_pipeline_accepts_custom_strategy():
     result = pipeline.fit_transform(events)
 
     assert result.iloc[0]["score"] == 8  # (view 1 + transaction 3) * 2
+
+
+def test_extract_latest_item_values_picks_latest_and_cleans_values():
+    item_properties = pd.DataFrame(
+        {
+            "timestamp": [100, 200, 100, 100, 100],
+            "itemid": [1, 1, 2, 3, 4],
+            "property": ["790", "790", "790", "790", "790"],
+            "value": ["n100", "n150", "n0", "n-50", "nabc"],
+        }
+    )
+
+    result = _extract_latest_item_values(item_properties)
+
+    assert result.to_dict() == {1: 150.0}
+
+
+def test_build_dataset_builds_expected_schema():
+    events = pd.DataFrame(
+        {
+            "visitorid": [10, 10, 11],
+            "itemid": [1, 2, 1],
+            "event": ["view", "addtocart", "transaction"],
+            "datetime": pd.to_datetime(["2020-01-01", "2020-01-02", "2020-01-03"]),
+        }
+    )
+    item_properties = pd.DataFrame(
+        {
+            "timestamp": [50],
+            "itemid": [1],
+            "property": ["790"],
+            "value": ["n200"],
+        }
+    )
+
+    result = build_dataset(events, item_properties)
+
+    assert list(result.columns) == ["user_id", "item_id", "event", "value", "timestamp"]
+    assert set(result["item_id"]) == {1}
+    assert sorted(result["event"]) == ["transaction", "view"]
+    assert (result["value"] == 200.0).all()

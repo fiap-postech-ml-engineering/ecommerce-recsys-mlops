@@ -8,6 +8,7 @@ import kagglehub
 import pandas as pd
 
 from src.config import DATA_DIR
+from src.data.preprocessor import build_dataset
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +20,6 @@ RAW_FILENAMES = (
 )
 KAGGLE_DATASET_HANDLE = "retailrocket/ecommerce-dataset"
 PROCESSED_FILENAME = "dataset_consolidated.csv"
-VALUE_PROPERTY_CODE = "790"
 
 
 def _ensure_raw_dataset(raw_dir: Path) -> None:
@@ -73,47 +73,7 @@ def _load_raw_tables(raw_dir: Path) -> tuple[pd.DataFrame, pd.DataFrame]:
     return events, item_properties
 
 
-def _extract_latest_item_values(item_properties: pd.DataFrame) -> pd.Series:
-    """Extrai o valor monetário mais recente por item (property 790).
-
-    Args:
-        item_properties: Tabela de propriedades de item (itemid, property, value, timestamp).
-
-    Returns:
-        Série indexada por ``itemid`` com o valor monetário mais recente e positivo.
-    """
-    values = item_properties[item_properties["property"] == VALUE_PROPERTY_CODE].copy()
-    values["value"] = pd.to_numeric(
-        values["value"].astype(str).str.replace("n", "", regex=False), errors="coerce"
-    )
-    values = values[values["value"] > 0]
-    values = values.sort_values("timestamp").drop_duplicates(subset=["itemid"], keep="last")
-    return values.set_index("itemid")["value"]
-
-
-def _consolidate_dataset(events: pd.DataFrame, item_properties: pd.DataFrame) -> pd.DataFrame:
-    """Consolida eventos e valores de item no schema bruto do dataset.
-
-    Args:
-        events: Tabela de eventos com colunas ``visitorid``, ``itemid``, ``event``, ``datetime``.
-        item_properties: Tabela de propriedades de item.
-
-    Returns:
-        DataFrame com colunas ``user_id``, ``item_id``, ``event``, ``value``, ``timestamp``.
-    """
-    item_values = _extract_latest_item_values(item_properties)
-
-    dataset = events[["visitorid", "itemid", "event", "datetime"]].copy()
-    dataset["value"] = dataset["itemid"].map(item_values)
-    dataset = dataset.dropna(subset=["value"])
-
-    dataset = dataset.rename(
-        columns={"visitorid": "user_id", "itemid": "item_id", "datetime": "timestamp"}
-    )
-    return dataset[["user_id", "item_id", "event", "value", "timestamp"]]
-
-
-def load_dataset(force_rebuild: bool = False) -> pd.DataFrame:
+def load_or_build_dataset(force_rebuild: bool = False) -> pd.DataFrame:
     """Carrega o dataset RetailRocket consolidado, usando cache em disco quando possível.
 
     Args:
@@ -132,7 +92,7 @@ def load_dataset(force_rebuild: bool = False) -> pd.DataFrame:
     raw_dir = DATA_DIR / "raw"
     _ensure_raw_dataset(raw_dir)
     events, item_properties = _load_raw_tables(raw_dir)
-    dataset = _consolidate_dataset(events, item_properties)
+    dataset = build_dataset(events, item_properties)
 
     processed_path.parent.mkdir(parents=True, exist_ok=True)
     dataset.to_csv(processed_path, index=False)

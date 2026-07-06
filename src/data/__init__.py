@@ -1,3 +1,4 @@
+from .filtering import k_core_filter
 from .loader import load_dataset
 from .preprocessor import (
     BasePreprocessor,
@@ -20,6 +21,7 @@ __all__ = [
     "WeightedInteractionPreprocessor",
     "build_interactions",
     "build_preprocessing_pipeline",
+    "k_core_filter",
     "load_dataset",
     "temporal_split",
     "validate_interactions",

@@ -32,6 +32,8 @@ class Settings(BaseSettings):
     TEST_SIZE: float = Field(default=0.2, gt=0.0, lt=1.0)
     VALIDATION_SIZE: float = Field(default=0.2, gt=0.0, lt=1.0)
     RECOMMENDATION_K: int = Field(default=10, gt=0)
+    MIN_USER_INTERACTIONS: int = Field(default=2, gt=0)
+    MIN_ITEM_INTERACTIONS: int = Field(default=5, gt=0)
 
     # SVD
     SVD_N_FACTORS: int = Field(default=50, gt=0)

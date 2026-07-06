@@ -164,9 +164,15 @@ def test_svd_recommender_recommend_respects_k():
 @pytest.mark.unit
 @pytest.mark.model
 def test_svd_recommender_get_params_reflects_config():
-    model = SVDRecommender({"n_factors": 7, "n_epochs": 3})
+    model = SVDRecommender({"n_factors": 7, "n_epochs": 3, "lr_all": 0.02, "reg_all": 0.1})
 
-    assert model.get_params() == {"model": "svd", "n_factors": 7, "n_epochs": 3}
+    assert model.get_params() == {
+        "model": "svd",
+        "n_factors": 7,
+        "n_epochs": 3,
+        "lr_all": 0.02,
+        "reg_all": 0.1,
+    }
 
 
 @pytest.mark.unit
@@ -178,3 +184,16 @@ def test_svd_recommender_uses_settings_defaults_when_config_omits_values():
 
     assert params["n_factors"] > 0
     assert params["n_epochs"] > 0
+    assert params["lr_all"] == 0.005
+    assert params["reg_all"] == 0.02
+
+
+@pytest.mark.unit
+@pytest.mark.model
+def test_svd_recommender_passes_lr_all_and_reg_all_to_algo():
+    interactions = _make_svd_interactions()
+    model = SVDRecommender({"n_factors": 2, "n_epochs": 2, "lr_all": 0.02, "reg_all": 0.1})
+    model.fit(interactions)
+
+    assert model._algo.lr_bu == 0.02
+    assert model._algo.reg_bu == 0.1

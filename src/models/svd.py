@@ -14,6 +14,8 @@ class SVDRecommender(BaseRecommender):
         self.config = config or {}
         self.n_factors = self.config.get("n_factors", settings.SVD_N_FACTORS)
         self.n_epochs = self.config.get("n_epochs", 20)
+        self.lr_all = self.config.get("lr_all", 0.005)
+        self.reg_all = self.config.get("reg_all", 0.02)
         self.random_state = self.config.get("random_state", settings.RANDOM_SEED)
         self._algo: SVD | None = None
         self._trainset = None
@@ -32,7 +34,11 @@ class SVDRecommender(BaseRecommender):
         self._trainset = dataset.build_full_trainset()
 
         self._algo = SVD(
-            n_factors=self.n_factors, n_epochs=self.n_epochs, random_state=self.random_state
+            n_factors=self.n_factors,
+            n_epochs=self.n_epochs,
+            lr_all=self.lr_all,
+            reg_all=self.reg_all,
+            random_state=self.random_state,
         )
         self._algo.fit(self._trainset)
 
@@ -68,4 +74,10 @@ class SVDRecommender(BaseRecommender):
         return recommendations
 
     def get_params(self) -> dict:
-        return {"model": "svd", "n_factors": self.n_factors, "n_epochs": self.n_epochs}
+        return {
+            "model": "svd",
+            "n_factors": self.n_factors,
+            "n_epochs": self.n_epochs,
+            "lr_all": self.lr_all,
+            "reg_all": self.reg_all,
+        }

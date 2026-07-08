@@ -126,8 +126,9 @@ docker-logs:
 	docker compose logs -f app
 
 docker-check:
-	docker compose up -d --build
-	curl http://localhost:8000/
-	docker compose down
+	@set -e; \
+	trap 'docker compose down' EXIT; \
+	docker compose up -d --build; \
+	curl --fail --silent --show-error --retry 12 --retry-delay 5 --retry-connrefused http://localhost:8000/
 
 stop: docker-down

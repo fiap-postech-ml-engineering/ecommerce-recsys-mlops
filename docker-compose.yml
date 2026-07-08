@@ -16,6 +16,9 @@ services:
     ports:
       - "8000:8000"
 
+    # Alinha permissões dos bind mounts com o usuário do host em dev.
+    user: "${UID:-1000}:${GID:-1000}"
+
     # Volumes usados para desenvolvimento com hot-reload.
     volumes:
       - ./src:/app/src

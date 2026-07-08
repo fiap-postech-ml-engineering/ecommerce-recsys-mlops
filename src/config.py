@@ -39,6 +39,21 @@ class Settings(BaseSettings):
     SVD_N_FACTORS: int = Field(default=50, gt=0)
     SVD_N_EPOCHS: int = Field(default=20, gt=0)
 
+    # ALS
+    ALS_FACTORS: int = Field(default=100, gt=0)
+    ALS_REGULARIZATION: float = Field(default=0.01, gt=0.0)
+    ALS_ALPHA: float = Field(default=1.0, gt=0.0)
+    ALS_ITERATIONS: int = Field(default=15, gt=0)
+
+    # BPR
+    BPR_FACTORS: int = Field(default=100, gt=0)
+    BPR_LEARNING_RATE: float = Field(default=0.01, gt=0.0)
+    BPR_REGULARIZATION: float = Field(default=0.01, gt=0.0)
+    BPR_ITERATIONS: int = Field(default=100, gt=0)
+
+    # ItemKNN (BM25)
+    ITEMKNN_N_NEIGHBORS: int = Field(default=20, gt=0)
+
     # MLP
     MLP_EMBEDDING_DIM: int = Field(default=64, gt=0)
     MLP_HIDDEN_DIMS: list[int] = Field(default=[128, 64])

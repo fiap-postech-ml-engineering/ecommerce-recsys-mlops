@@ -1,4 +1,7 @@
+from src.models.als import ALSRecommender
 from src.models.base import BaseRecommender
+from src.models.bpr import BPRRecommender
+from src.models.itemknn import ItemKNNRecommender
 from src.models.mlp import MLPRecommender
 from src.models.popularity import PopularityRecommender
 from src.models.svd import SVDRecommender
@@ -8,6 +11,9 @@ _REGISTRY: dict[str, type[BaseRecommender]] = {
     "popularity": PopularityRecommender,
     "svd": SVDRecommender,
     "mlp": MLPRecommender,
+    "als": ALSRecommender,
+    "bpr": BPRRecommender,
+    "itemknn": ItemKNNRecommender,
 }
 
 

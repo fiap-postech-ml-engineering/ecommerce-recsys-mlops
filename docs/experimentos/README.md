@@ -43,4 +43,5 @@ o registro é atualizado para `Aceito` (ou descartado) quando a correção for d
 | [0002](0002-nomenclatura-experimentos-mlflow.md) | Nomenclatura e isolamento dos experimentos MLflow | Aceito |
 | [0003](0003-mlp-fora-do-notebook-02.md) | MLP fora do notebook de baselines | Aceito |
 | [0004](0004-criterio-selecao-hiperparametros-svd.md) | Critério de seleção de hiperparâmetros do SVD | Aceito |
-| [0005](0005-diagnostico-instabilidade-score-svd.md) | Diagnóstico: instabilidade do score sem cap no SVD | Proposto |
+| [0005](0005-diagnostico-instabilidade-score-svd.md) | Diagnóstico: instabilidade do score sem cap no SVD | Aceito parcialmente |
+| [0006](0006-diagnostico-ground-truth-addtocart.md) | Diagnóstico: ground truth mais fraco (addtocart) não fecha a lacuna SVD vs Popularity | Aceito |

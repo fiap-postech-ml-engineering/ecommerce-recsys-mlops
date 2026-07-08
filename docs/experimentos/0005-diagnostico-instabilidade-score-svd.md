@@ -102,6 +102,10 @@ levantada nesta mesma investigação:
   ou aceitar que num dataset tão esparso um SVD puro não bate um baseline de popularidade
   e que o ganho real de personalização só aparece no MLP (`03_mlp.ipynb`), que pode usar
   features de conteúdo além de colaborativo puro.
+- **Atualização ([0006](0006-diagnostico-ground-truth-addtocart.md)):** o candidato acima
+  (ground truth mais fraco) foi testado e refutado como causa suficiente — afrouxar para
+  `addtocart` reduz a esparsidade, mas não fecha a lacuna entre Popularity e SVD. Reforça
+  a alternativa: o ganho de personalização deve vir do MLP.
 - `n_factors=100, n_epochs=300, lr_all=0,02, reg_all=0,02` é a melhor configuração do
   grid novo e deve ser a referência para `train.py`/`params.yaml` quando o SVD for
   formalizado — mesmo perdendo do Popularity, é estritamente melhor que qualquer

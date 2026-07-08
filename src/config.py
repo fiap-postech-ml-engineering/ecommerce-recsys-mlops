@@ -37,6 +37,7 @@ class Settings(BaseSettings):
 
     # SVD
     SVD_N_FACTORS: int = Field(default=50, gt=0)
+    SVD_N_EPOCHS: int = Field(default=20, gt=0)
 
     # MLP
     MLP_EMBEDDING_DIM: int = Field(default=64, gt=0)

@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -164,7 +165,9 @@ def test_svd_recommender_recommend_respects_k():
 @pytest.mark.unit
 @pytest.mark.model
 def test_svd_recommender_get_params_reflects_config():
-    model = SVDRecommender({"n_factors": 7, "n_epochs": 3, "lr_all": 0.02, "reg_all": 0.1})
+    model = SVDRecommender(
+        {"n_factors": 7, "n_epochs": 3, "lr_all": 0.02, "reg_all": 0.1, "random_state": 7}
+    )
 
     assert model.get_params() == {
         "model": "svd",
@@ -172,6 +175,7 @@ def test_svd_recommender_get_params_reflects_config():
         "n_epochs": 3,
         "lr_all": 0.02,
         "reg_all": 0.1,
+        "random_state": 7,
     }
 
 
@@ -197,3 +201,26 @@ def test_svd_recommender_passes_lr_all_and_reg_all_to_algo():
 
     assert model._algo.lr_bu == 0.02
     assert model._algo.reg_bu == 0.1
+
+
+@pytest.mark.unit
+@pytest.mark.model
+def test_svd_recommender_recommend_raises_before_fit():
+    model = SVDRecommender({"n_factors": 2, "n_epochs": 2})
+
+    with pytest.raises(RuntimeError):
+        model.recommend(user_id=1, k=2)
+
+
+@pytest.mark.unit
+@pytest.mark.model
+def test_svd_recommender_scores_known_user_with_personalized_embeddings():
+    """Usuário presente no treino deve usar o inner_uid correto (não o raw user_id)."""
+    interactions = _make_svd_interactions()
+    model = SVDRecommender({"n_factors": 2, "n_epochs": 5})
+    model.fit(interactions)
+
+    known_user_scores = model._score_all_items(user_id=1)
+    cold_start_scores = model._trainset.global_mean + model._algo.bi
+
+    assert not np.allclose(known_user_scores, cold_start_scores)

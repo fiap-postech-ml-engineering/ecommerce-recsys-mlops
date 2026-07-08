@@ -45,3 +45,6 @@ o registro é atualizado para `Aceito` (ou descartado) quando a correção for d
 | [0004](0004-criterio-selecao-hiperparametros-svd.md) | Critério de seleção de hiperparâmetros do SVD | Aceito |
 | [0005](0005-diagnostico-instabilidade-score-svd.md) | Diagnóstico: instabilidade do score sem cap no SVD | Aceito parcialmente |
 | [0006](0006-diagnostico-ground-truth-addtocart.md) | Diagnóstico: ground truth mais fraco (addtocart) não fecha a lacuna SVD vs Popularity | Aceito |
+| [0007](0007-svd-explicito-objetivo-incompativel.md) | SVD explícito otimiza objetivo incompatível com o problema (não é só esparsidade) | Aceito |
+| [0008](0008-als-bpr-itemknn-comparacao.md) | ALS, BPR e BM25 ItemKNN: comparação de 3 famílias de CF implícito | Aceito |
+| [0009](0009-interpretacao-ndcg-protocolo-avaliacao.md) | Interpretação do NDCG@10 medido: protocolo de avaliação e posição do hit | Aceito |

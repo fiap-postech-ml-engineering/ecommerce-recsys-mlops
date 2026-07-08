@@ -106,6 +106,12 @@ levantada nesta mesma investigação:
   (ground truth mais fraco) foi testado e refutado como causa suficiente — afrouxar para
   `addtocart` reduz a esparsidade, mas não fecha a lacuna entre Popularity e SVD. Reforça
   a alternativa: o ganho de personalização deve vir do MLP.
+- **Atualização ([0007](0007-svd-explicito-objetivo-incompativel.md)):** a causa raiz
+  principal não era (só) esparsidade — era o algoritmo. `scikit-surprise`'s `SVD` otimiza
+  RMSE de rating explícito, não ranking implícito. Trocando só o algoritmo (mesmo
+  pipeline/split/dados) por fatoração de matriz implícita (ALS), o resultado vira de
+  "perde do Popularity por 20-90x" para "ganha por ~10-12x" — ver 0007/0008 para a
+  investigação completa e mais duas famílias de algoritmo testadas.
 - `n_factors=100, n_epochs=300, lr_all=0,02, reg_all=0,02` é a melhor configuração do
   grid novo e deve ser a referência para `train.py`/`params.yaml` quando o SVD for
   formalizado — mesmo perdendo do Popularity, é estritamente melhor que qualquer

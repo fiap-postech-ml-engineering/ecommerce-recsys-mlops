@@ -59,3 +59,10 @@ corte `addtocart` em relação a `transaction`, tanto em `val` quanto em `test`.
   encerrada por ora.
 - Reforça a expectativa, já levantada em 0005, de que o ganho real de personalização deve
   vir do MLP (`03_mlp.ipynb`), que pode explorar features além do colaborativo puro.
+- **Atualização ([0007](0007-svd-explicito-objetivo-incompativel.md)/[0009](0009-interpretacao-ndcg-protocolo-avaliacao.md)):**
+  a esparsidade continua real (0009 mostra que ~70-75% dos usuários elegíveis não recebem
+  nenhum hit, mesmo com modelos implícitos bons), mas não era a causa suficiente da perda
+  do SVD explícito — essa era o algoritmo (0007). Fatoração de matriz implícita (ALS) e
+  outras famílias de CF implícito (0008) superam o Popularity mesmo sob essa mesma
+  esparsidade, então a linha de investigação de baseline de matrix factorization
+  reabre — não fica mais restrita ao SVD explícito.

@@ -18,6 +18,20 @@ RAW_EVENTS_SCHEMA = pa.DataFrameSchema(
     name="RawEventsSchema",
 )
 
+RAW_KAGGLE_EVENTS_SCHEMA = pa.DataFrameSchema(
+    {
+        "visitorid": pa.Column(int, nullable=False),
+        "itemid": pa.Column(int, nullable=False),
+        "event": pa.Column(
+            str,
+            pa.Check.isin(["view", "addtocart", "transaction"]),
+            nullable=False,
+        ),
+        "datetime": pa.Column(pa.DateTime, nullable=False),
+    },
+    name="RawKaggleEventsSchema",
+)
+
 INTERACTIONS_SCHEMA = pa.DataFrameSchema(
     {
         "user_id": pa.Column(int, nullable=False),
@@ -28,6 +42,22 @@ INTERACTIONS_SCHEMA = pa.DataFrameSchema(
     },
     name="InteractionsSchema",
 )
+
+
+def validate_raw_kaggle_events(df: pd.DataFrame) -> pd.DataFrame:
+    """Valida DataFrame bruto de eventos do Kaggle contra RAW_KAGGLE_EVENTS_SCHEMA.
+
+    Args:
+        df: DataFrame com colunas ``visitorid``, ``itemid``, ``event``, ``datetime``
+            (saída de ``_load_raw_tables()``).
+
+    Returns:
+        O mesmo DataFrame se válido.
+
+    Raises:
+        pandera.errors.SchemaError: Se o schema for violado.
+    """
+    return RAW_KAGGLE_EVENTS_SCHEMA.validate(df)
 
 
 def validate_raw_events(df: pd.DataFrame) -> pd.DataFrame:

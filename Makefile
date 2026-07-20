@@ -45,6 +45,20 @@ create_environment:
 	@echo ">>> Windows: .\\.venv\\Scripts\\activate"
 	@echo ">>> Unix/macOS: source ./.venv/bin/activate"
 
+dataset:
+	@echo ">>> Limpando a pasta data/raw"
+	rm -rf data/raw/*
+	@echo ">>> Baixando e processando dataset..."
+	uv run python -c "from src.data.loader import load_dataset; load_dataset(force_rebuild=True)"
+	@echo ">>> Dataset processado e salvo em data/raw."
+
+dvc:
+	@echo ">>> Configurando DVC no storage local..."
+	uv dvc remote add -d localremote ~/dvc-storage --local
+	uv dvc commit data/raw.dvc
+	uv dvc push
+	@echo ">>> DVC configurado em ~/dvc-storage."
+
 ## Testes
 
 test:

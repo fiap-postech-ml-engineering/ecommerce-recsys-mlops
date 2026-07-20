@@ -2,7 +2,7 @@ import pandas as pd
 import pandera.pandas
 import pytest
 
-from src.data.schema import validate_interactions, validate_raw_events
+from src.data.schema import validate_interactions, validate_raw_events, validate_raw_kaggle_events
 
 
 def _make_valid_raw_events() -> pd.DataFrame:
@@ -13,6 +13,17 @@ def _make_valid_raw_events() -> pd.DataFrame:
             "event": ["view", "transaction"],
             "value": [50.0, 30.0],
             "timestamp": pd.to_datetime(["2020-01-01", "2020-01-02"]),
+        }
+    )
+
+
+def _make_valid_raw_kaggle_events() -> pd.DataFrame:
+    return pd.DataFrame(
+        {
+            "visitorid": [10, 11],
+            "itemid": [1, 2],
+            "event": ["view", "transaction"],
+            "datetime": pd.to_datetime(["2020-01-01", "2020-01-02"]),
         }
     )
 
@@ -77,3 +88,24 @@ def test_interactions_schema_accepts_nullable_value():
     df["value"] = [50.0, None]
     result = validate_interactions(df)
     assert result["value"].isna().any()
+
+
+@pytest.mark.unit
+def test_raw_kaggle_events_schema_accepts_valid_dataframe():
+    result = validate_raw_kaggle_events(_make_valid_raw_kaggle_events())
+    assert list(result.columns) == ["visitorid", "itemid", "event", "datetime"]
+
+
+@pytest.mark.unit
+def test_raw_kaggle_events_schema_rejects_invalid_event_type():
+    df = _make_valid_raw_kaggle_events()
+    df["event"] = ["view", "invalid_event"]
+    with pytest.raises(pandera.pandas.errors.SchemaError):
+        validate_raw_kaggle_events(df)
+
+
+@pytest.mark.unit
+def test_raw_kaggle_events_schema_rejects_missing_column():
+    df = _make_valid_raw_kaggle_events().drop(columns=["visitorid"])
+    with pytest.raises(pandera.pandas.errors.SchemaError):
+        validate_raw_kaggle_events(df)

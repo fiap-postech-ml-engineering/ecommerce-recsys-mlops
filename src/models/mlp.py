@@ -61,6 +61,7 @@ class MLPRecommender(BaseRecommender):
             "early_stopping_patience", settings.MLP_EARLY_STOPPING_PATIENCE
         )
         self.random_state = self.config.get("random_state", settings.RANDOM_SEED)
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         self._model: _MLPTower | None = None
         self._item_ids_by_inner: list[int] = []
@@ -160,7 +161,7 @@ class MLPRecommender(BaseRecommender):
             n_items=len(self._item_ids_by_inner),
             embedding_dim=self.embedding_dim,
             hidden_dims=self.hidden_dims,
-        )
+        ).to(self.device)
         optimizer = torch.optim.Adam(model.parameters(), lr=self.learning_rate)
         return model, optimizer, nn.BCEWithLogitsLoss()
 
@@ -171,6 +172,11 @@ class MLPRecommender(BaseRecommender):
         self._model.train()
         total_loss, n_batches = 0.0, 0
         for user_idx, item_idx, labels in loader:
+            user_idx, item_idx, labels = (
+                user_idx.to(self.device),
+                item_idx.to(self.device),
+                labels.to(self.device),
+            )
             optimizer.zero_grad()
             loss = criterion(self._model(user_idx, item_idx), labels)
             loss.backward()
@@ -185,6 +191,11 @@ class MLPRecommender(BaseRecommender):
         total_loss, n_batches = 0.0, 0
         with torch.no_grad():
             for user_idx, item_idx, labels in loader:
+                user_idx, item_idx, labels = (
+                    user_idx.to(self.device),
+                    item_idx.to(self.device),
+                    labels.to(self.device),
+                )
                 total_loss += criterion(self._model(user_idx, item_idx), labels).item()
                 n_batches += 1
         return total_loss / n_batches
@@ -254,12 +265,12 @@ class MLPRecommender(BaseRecommender):
     def _score_all_items(self, user_inner: int) -> np.ndarray:
         """Pontua todo o catálogo (logit cru) para um índice interno de usuário, via forward batched."""
         n_items = len(self._item_ids_by_inner)
-        item_idx = torch.arange(n_items, dtype=torch.long)
-        user_idx = torch.full((n_items,), user_inner, dtype=torch.long)
+        item_idx = torch.arange(n_items, dtype=torch.long, device=self.device)
+        user_idx = torch.full((n_items,), user_inner, dtype=torch.long, device=self.device)
         self._model.eval()
         with torch.no_grad():
             logits = self._model(user_idx, item_idx)
-        return logits.numpy()
+        return logits.cpu().numpy()
 
     def recommend(self, user_id: int, k: int) -> list[int]:
         """Retorna os top-k item_id com maior score, excluindo itens já vistos.

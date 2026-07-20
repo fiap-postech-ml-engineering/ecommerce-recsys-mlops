@@ -1,9 +1,11 @@
+import numpy as np
 import pandas as pd
 
 from src.data.preprocessor import (
     BasePreprocessor,
     WeightedInteractionPreprocessor,
     _extract_latest_item_values,
+    apply_log_scaling,
     build_dataset,
     build_interactions,
     build_preprocessing_pipeline,
@@ -101,6 +103,23 @@ def test_build_preprocessing_pipeline_accepts_custom_strategy():
     result = pipeline.fit_transform(events)
 
     assert result.iloc[0]["score"] == 8  # (view 1 + transaction 3) * 2
+
+
+def test_apply_log_scaling_transforms_score_with_log1p():
+    interactions = pd.DataFrame({"user_id": [1, 2], "item_id": [10, 20], "score": [1, 308]})
+
+    result = apply_log_scaling(interactions)
+
+    assert np.isclose(result.loc[0, "score"], np.log1p(1))
+    assert np.isclose(result.loc[1, "score"], np.log1p(308))
+
+
+def test_apply_log_scaling_does_not_mutate_input():
+    interactions = pd.DataFrame({"user_id": [1], "item_id": [10], "score": [3]})
+
+    apply_log_scaling(interactions)
+
+    assert interactions.loc[0, "score"] == 3
 
 
 def test_extract_latest_item_values_picks_latest_and_cleans_values():

@@ -108,6 +108,19 @@ O intuito é agregar no ticket médio geral do cliente que já comprou (Não de 
 | Coverage | % do catálogo recomendado | Não | 0 a 1, quanto maior melhor |
 | Revenue@K | Soma do value dos itens recomendados que foram comprados | Sim | Quanto maior melhor (R$) |
 
+## Hierarquia de métricas para seleção de modelo
+
+| Papel | Métrica | Motivo |
+| --- | --- | --- |
+| Principal | NDCG@K | Penaliza acertos no final da lista — avalia qualidade da ordenação |
+| Desempate | Hit Rate@K | Mais interpretável para negócio; desempata quando NDCG é próximo |
+| Monitoramento | Precision@K e Recall@K | Complementares; revelam se o modelo é conservador ou abrangente |
+| Negócio | Coverage e Revenue@K | Não entram na seleção — justificam o valor real do modelo |
+
+**Avaliação em duas fases:**
+1. Seleção de configuração (ex: melhor `n_factors` do SVD) → NDCG@K no `val_df`
+2. Avaliação final → todas as 6 métricas no `test_df`, tocado apenas uma vez
+
 
 # Design patterns que vamos utilizar
 

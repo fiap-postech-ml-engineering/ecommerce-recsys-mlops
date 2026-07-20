@@ -17,7 +17,9 @@ from src.config import LOGS_DIR, MODELS_DIR, get_settings
 
 logger = logging.getLogger(__name__)
 
-ALLOWED_MODEL_TYPES: frozenset[str] = frozenset({"popularity", "svd", "mlp"})
+ALLOWED_MODEL_TYPES: frozenset[str] = frozenset(
+    {"popularity", "svd", "mlp", "als", "bpr", "itemknn"}
+)
 
 
 def _safe_git(cmd: list[str]) -> str:

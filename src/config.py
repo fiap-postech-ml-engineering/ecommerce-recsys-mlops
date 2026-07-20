@@ -32,9 +32,27 @@ class Settings(BaseSettings):
     TEST_SIZE: float = Field(default=0.2, gt=0.0, lt=1.0)
     VALIDATION_SIZE: float = Field(default=0.2, gt=0.0, lt=1.0)
     RECOMMENDATION_K: int = Field(default=10, gt=0)
+    MIN_USER_INTERACTIONS: int = Field(default=2, gt=0)
+    MIN_ITEM_INTERACTIONS: int = Field(default=5, gt=0)
 
     # SVD
     SVD_N_FACTORS: int = Field(default=50, gt=0)
+    SVD_N_EPOCHS: int = Field(default=20, gt=0)
+
+    # ALS
+    ALS_FACTORS: int = Field(default=100, gt=0)
+    ALS_REGULARIZATION: float = Field(default=0.01, gt=0.0)
+    ALS_ALPHA: float = Field(default=1.0, gt=0.0)
+    ALS_ITERATIONS: int = Field(default=15, gt=0)
+
+    # BPR
+    BPR_FACTORS: int = Field(default=100, gt=0)
+    BPR_LEARNING_RATE: float = Field(default=0.01, gt=0.0)
+    BPR_REGULARIZATION: float = Field(default=0.01, gt=0.0)
+    BPR_ITERATIONS: int = Field(default=100, gt=0)
+
+    # ItemKNN (BM25)
+    ITEMKNN_N_NEIGHBORS: int = Field(default=20, gt=0)
 
     # MLP
     MLP_EMBEDDING_DIM: int = Field(default=64, gt=0)

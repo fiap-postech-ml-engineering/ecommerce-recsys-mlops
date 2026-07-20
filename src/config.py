@@ -60,6 +60,8 @@ class Settings(BaseSettings):
     MLP_EPOCHS: int = Field(default=50, gt=0)
     MLP_LEARNING_RATE: float = Field(default=0.001, gt=0.0)
     MLP_BATCH_SIZE: int = Field(default=256, gt=0)
+    MLP_NEGATIVE_SAMPLES: int = Field(default=4, gt=0)
+    MLP_EARLY_STOPPING_PATIENCE: int = Field(default=5, gt=0)
 
     # MLflow / Databricks
     MLFLOW_TRACKING_URI: str = Field(default="databricks")

@@ -464,3 +464,168 @@ def test_itemknn_recommender_recommend_returns_empty_list_for_unknown_user():
     model.fit(interactions)
 
     assert model.recommend(user_id=999, k=5) == []
+
+
+def _mlp_test_config() -> dict:
+    """Config minúscula pra manter os testes de MLP rápidos (sem GPU/época longa)."""
+    return {
+        "embedding_dim": 4,
+        "hidden_dims": [8],
+        "epochs": 2,
+        "batch_size": 4,
+        "negative_samples": 1,
+        "random_state": 42,
+    }
+
+
+@pytest.mark.unit
+@pytest.mark.model
+def test_mlp_recommender_recommend_raises_before_fit():
+    model = MLPRecommender(_mlp_test_config())
+
+    with pytest.raises(RuntimeError):
+        model.recommend(user_id=1, k=2)
+
+
+@pytest.mark.unit
+@pytest.mark.model
+def test_mlp_recommender_recommend_returns_empty_list_for_unknown_user():
+    interactions = _make_implicit_interactions()
+    model = MLPRecommender(_mlp_test_config())
+    model.fit(interactions)
+
+    assert model.recommend(user_id=999, k=5) == []
+
+
+@pytest.mark.unit
+@pytest.mark.model
+def test_mlp_recommender_recommend_excludes_items_seen_in_training():
+    interactions = _make_implicit_interactions()
+    model = MLPRecommender(_mlp_test_config())
+    model.fit(interactions)
+
+    recs = model.recommend(user_id=1, k=5)
+
+    assert set(recs).isdisjoint({10, 20})
+
+
+@pytest.mark.unit
+@pytest.mark.model
+def test_mlp_recommender_recommend_respects_k():
+    interactions = _make_implicit_interactions()
+    model = MLPRecommender(_mlp_test_config())
+    model.fit(interactions)
+
+    assert len(model.recommend(user_id=1, k=2)) == 2
+
+
+@pytest.mark.unit
+@pytest.mark.model
+def test_mlp_recommender_get_params_reflects_config():
+    config = {
+        "embedding_dim": 8,
+        "hidden_dims": [16, 8],
+        "epochs": 3,
+        "learning_rate": 0.01,
+        "batch_size": 16,
+        "negative_samples": 2,
+        "early_stopping_patience": 1,
+        "random_state": 7,
+    }
+    model = MLPRecommender(config)
+
+    assert model.get_params() == {
+        "model": "mlp",
+        "embedding_dim": 8,
+        "hidden_dims": [16, 8],
+        "epochs": 3,
+        "epochs_trained": None,
+        "learning_rate": 0.01,
+        "batch_size": 16,
+        "negative_samples": 2,
+        "early_stopping_patience": 1,
+        "random_state": 7,
+    }
+
+
+@pytest.mark.unit
+@pytest.mark.model
+def test_mlp_recommender_uses_settings_defaults_when_config_omits_values():
+    settings = get_settings()
+    model = MLPRecommender({})
+
+    params = model.get_params()
+
+    assert params["embedding_dim"] == settings.MLP_EMBEDDING_DIM
+    assert params["hidden_dims"] == settings.MLP_HIDDEN_DIMS
+    assert params["epochs"] == settings.MLP_EPOCHS
+    assert params["learning_rate"] == settings.MLP_LEARNING_RATE
+    assert params["batch_size"] == settings.MLP_BATCH_SIZE
+    assert params["negative_samples"] == settings.MLP_NEGATIVE_SAMPLES
+    assert params["early_stopping_patience"] == settings.MLP_EARLY_STOPPING_PATIENCE
+    assert params["random_state"] == settings.RANDOM_SEED
+
+
+@pytest.mark.unit
+@pytest.mark.model
+def test_mlp_recommender_training_history_has_train_and_val_loss_per_epoch():
+    interactions = _make_implicit_interactions()
+    config = _mlp_test_config()
+    model = MLPRecommender(config)
+
+    model.fit(interactions)
+
+    assert len(model.training_history["train_loss"]) == config["epochs"]
+    assert len(model.training_history["val_loss"]) == config["epochs"]
+
+
+@pytest.mark.unit
+@pytest.mark.model
+def test_mlp_recommender_fit_is_reproducible_with_same_seed():
+    interactions = _make_implicit_interactions()
+    model_a = MLPRecommender(_mlp_test_config())
+    model_b = MLPRecommender(_mlp_test_config())
+
+    model_a.fit(interactions)
+    model_b.fit(interactions)
+
+    assert model_a.recommend(user_id=1, k=5) == model_b.recommend(user_id=1, k=5)
+
+
+@pytest.mark.unit
+@pytest.mark.model
+def test_mlp_recommender_epochs_trained_is_none_before_fit():
+    model = MLPRecommender(_mlp_test_config())
+
+    assert model.epochs_trained is None
+
+
+@pytest.mark.unit
+@pytest.mark.model
+def test_mlp_recommender_epochs_trained_reflects_actual_epochs_after_fit():
+    interactions = _make_implicit_interactions()
+    config = _mlp_test_config()
+    model = MLPRecommender(config)
+
+    model.fit(interactions)
+
+    assert 1 <= model.epochs_trained <= config["epochs"]
+
+
+@pytest.mark.unit
+@pytest.mark.model
+def test_mlp_recommender_early_stopping_halts_before_configured_max_epochs(monkeypatch):
+    interactions = _make_implicit_interactions()
+    config = _mlp_test_config() | {"epochs": 10, "early_stopping_patience": 1}
+    model = MLPRecommender(config)
+
+    # val_loss piora a cada época após a 1ª — patience=1 deve interromper cedo.
+    worsening_val_losses = iter([1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0])
+    monkeypatch.setattr(
+        model, "_evaluate_loss", lambda *_args, **_kwargs: next(worsening_val_losses)
+    )
+
+    model.fit(interactions)
+
+    assert model.epochs_trained == 2
+    assert model.get_params()["epochs_trained"] == 2

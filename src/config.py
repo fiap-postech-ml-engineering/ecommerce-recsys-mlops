@@ -66,6 +66,8 @@ class Settings(BaseSettings):
     MLFLOW_EXPERIMENT_NAME: str = Field(
         default="/Shared/mlflow_ecomm_recsys/02 - ECOMM_RECSYS - Production"
     )
+    MLFLOW_MODEL_NAME: str = Field(default="ecomm-recsys-mlp")
+    MLFLOW_MODEL_ALIAS: str = Field(default="production")
     DATABRICKS_HOST: str | None = Field(default=None)
     DATABRICKS_TOKEN: SecretStr | None = Field(default=None)
 

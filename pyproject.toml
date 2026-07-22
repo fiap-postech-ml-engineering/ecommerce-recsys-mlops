@@ -15,7 +15,7 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License"
 ]
-requires-python = "~=3.13.0"
+requires-python = ">=3.12,<3.13"
 dependencies = [
     "dvc>=3.67.1",
     "fastapi>=0.136.1",
@@ -23,7 +23,7 @@ dependencies = [
     "kagglehub>=1.0.2",
     "matplotlib>=3.11.0",
     "mlflow>=3.0.0",
-    "numpy>=2.5.0",
+    "numpy<2",
     "pandas<3",
     "pandera>=0.32.0",
     "pydantic-settings>=2.14.1",
@@ -32,6 +32,9 @@ dependencies = [
     "scikit-surprise>=1.1.5",
     "seaborn>=0.13.2",
     "uvicorn>=0.47.0",
+    "torch==2.2.2",
+    "torchvision==0.17.2",
+    "torchaudio==2.2.2",
 ]
 
 [project.optional-dependencies]

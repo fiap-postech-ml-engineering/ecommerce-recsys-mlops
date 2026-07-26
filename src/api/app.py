@@ -2,11 +2,11 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from src.api.inference import recommender_service
 from src.api.middleware import register_observability_middleware
+from src.api.routes.recommend import router as recommend_router
 from src.config import get_settings
 
-from src.api.inference import recommender_service
-from src.api.routes.recommend import router as recommend_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -24,6 +24,7 @@ app = FastAPI(
 )
 
 register_observability_middleware(app)
+app.include_router(recommend_router)
 
 
 @app.get("/")

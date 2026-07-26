@@ -13,6 +13,7 @@ import logging
 import mlflow
 
 from src.config import get_settings
+from src.tracking.mlflow_utils import configure_mlflow_tracking
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +28,7 @@ class RecommenderService:
         """Tenta carregar o modelo em Production. Nunca levanta exceção —
         loga o motivo da falha e deixa o serviço em modo degradado."""
         settings = get_settings()
+        configure_mlflow_tracking()
         model_uri = f"models:/{settings.MLFLOW_MODEL_NAME}@{settings.MLFLOW_MODEL_ALIAS}"
 
         try:
@@ -53,9 +55,7 @@ class RecommenderService:
         # docs/internal/mlflow/02_mlflow_boas_praticas.md, seção 5), não
         # recommend(user_id, k) diretamente. Falta decidir contra qual
         # conjunto de itens candidatos rodar o score antes de rankear o top-k.
-        raise NotImplementedError(
-            "Estratégia de candidate scoring pendente de definição do time."
-        )
+        raise NotImplementedError("Estratégia de candidate scoring pendente de definição do time.")
 
 
 recommender_service = RecommenderService()

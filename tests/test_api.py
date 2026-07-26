@@ -42,6 +42,7 @@ def test_response_reuses_client_provided_request_id():
 
     assert response.headers[REQUEST_ID_HEADER] == "my-custom-id"
 
+
 def test_recommend_returns_503_when_model_not_ready():
     client = TestClient(app)
     response = client.post("/recommend", json={"user_id": 1, "k": 5})

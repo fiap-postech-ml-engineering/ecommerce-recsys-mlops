@@ -1,6 +1,6 @@
 # Base comum usada pelos stages de build.
 # Mantém configurações globais do Python e instala o uv.
-FROM python:3.13-slim AS base
+FROM python:3.12-slim AS base
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
@@ -26,7 +26,7 @@ RUN uv sync --frozen --no-dev
 
 # Stage final da aplicação.
 # Recebe somente o ambiente resolvido e o código necessário para execução.
-FROM python:3.13-slim AS runtime
+FROM python:3.12-slim AS runtime
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \

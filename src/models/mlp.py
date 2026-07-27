@@ -38,6 +38,26 @@ class _MLPTower(nn.Module):
         return self.tower(x).squeeze(-1)
 
 
+class _EarlyStoppingTracker:
+    """Acompanha a melhor época (menor `val_loss`) e decide quando parar o treino."""
+
+    def __init__(self, patience: int) -> None:
+        self.patience = patience
+        self.best_val_loss = float("inf")
+        self.best_state: dict[str, torch.Tensor] | None = None
+        self._epochs_without_improvement = 0
+
+    def update(self, val_loss: float, state_dict: dict[str, torch.Tensor]) -> bool:
+        """Registra a época atual; retorna True se o treino deve parar agora."""
+        if val_loss < self.best_val_loss - _EARLY_STOPPING_MIN_DELTA:
+            self.best_val_loss = val_loss
+            self.best_state = copy.deepcopy(state_dict)
+            self._epochs_without_improvement = 0
+            return False
+        self._epochs_without_improvement += 1
+        return self._epochs_without_improvement >= self.patience
+
+
 class MLPRecommender(BaseRecommender):
     """Modelo principal baseado em embeddings e MLP (PyTorch).
 
@@ -93,16 +113,25 @@ class MLPRecommender(BaseRecommender):
             negatives.append(candidate)
         return negatives
 
-    def _encode_positives(
-        self, interactions: pd.DataFrame
-    ) -> tuple[list[int], list[int], dict[int, set[int]]]:
-        """Converte interações em índices internos e agrupa itens vistos por usuário."""
+    def _encode_indices(self, interactions: pd.DataFrame) -> tuple[list[int], list[int]]:
+        """Converte user_id/item_id de um split em índices internos de embedding."""
         user_idx = [self._inner_by_user_id[u] for u in interactions["user_id"]]
         item_idx = [self._inner_by_item_id[i] for i in interactions["item_id"]]
+        return user_idx, item_idx
+
+    def _build_full_seen_by_user_inner(self, interactions: pd.DataFrame) -> dict[int, set[int]]:
+        """Mapeia usuário (índice interno) -> itens (índice interno) vistos em TODO o histórico.
+
+        Calculado uma única vez a partir de `interactions` completo (não por split), pra
+        que a amostragem de negativos do holdout de validação não trate como negativo um
+        item que o usuário viu no split de treino — ver docs/experimentos/0010.
+        """
         seen_by_user_inner: dict[int, set[int]] = {}
-        for u, i in zip(user_idx, item_idx, strict=True):
-            seen_by_user_inner.setdefault(u, set()).add(i)
-        return user_idx, item_idx, seen_by_user_inner
+        for u, i in zip(interactions["user_id"], interactions["item_id"], strict=True):
+            seen_by_user_inner.setdefault(self._inner_by_user_id[u], set()).add(
+                self._inner_by_item_id[i]
+            )
+        return seen_by_user_inner
 
     def _sample_negatives_for_positives(
         self,
@@ -120,10 +149,13 @@ class MLPRecommender(BaseRecommender):
         return neg_user_idx, neg_item_idx
 
     def _build_training_tensors(
-        self, interactions: pd.DataFrame, rng: np.random.Generator
+        self,
+        interactions: pd.DataFrame,
+        rng: np.random.Generator,
+        seen_by_user_inner: dict[int, set[int]],
     ) -> TensorDataset:
         """Monta positivos (label 1) + negativos amostrados (label 0) como TensorDataset."""
-        pos_user, pos_item, seen_by_user_inner = self._encode_positives(interactions)
+        pos_user, pos_item = self._encode_indices(interactions)
         neg_user, neg_item = self._sample_negatives_for_positives(
             rng, pos_user, seen_by_user_inner
         )
@@ -148,10 +180,14 @@ class MLPRecommender(BaseRecommender):
         return (train_rows, val_rows) if not val_rows.empty else (train_rows, train_rows)
 
     def _make_loader(
-        self, rows: pd.DataFrame, rng: np.random.Generator, shuffle: bool
+        self,
+        rows: pd.DataFrame,
+        rng: np.random.Generator,
+        seen_by_user_inner: dict[int, set[int]],
+        shuffle: bool,
     ) -> DataLoader:
         """Monta o DataLoader de treino/validação a partir de um recorte de interações."""
-        dataset = self._build_training_tensors(rows, rng)
+        dataset = self._build_training_tensors(rows, rng, seen_by_user_inner)
         return DataLoader(dataset, batch_size=self.batch_size, shuffle=shuffle)
 
     def _init_model(self) -> tuple[_MLPTower, torch.optim.Optimizer, nn.Module]:
@@ -200,10 +236,6 @@ class MLPRecommender(BaseRecommender):
                 n_batches += 1
         return total_loss / n_batches
 
-    def _has_improved(self, val_loss: float, best_val_loss: float) -> bool:
-        """True se `val_loss` melhora `best_val_loss` além do delta mínimo de ruído."""
-        return val_loss < best_val_loss - _EARLY_STOPPING_MIN_DELTA
-
     def _run_training_loop(
         self,
         train_loader: DataLoader,
@@ -218,9 +250,7 @@ class MLPRecommender(BaseRecommender):
         última. `epochs_trained` registra quantas épocas realmente rodaram.
         """
         self.training_history = {"train_loss": [], "val_loss": []}
-        best_val_loss = float("inf")
-        best_state: dict[str, torch.Tensor] | None = None
-        epochs_without_improvement = 0
+        tracker = _EarlyStoppingTracker(self.early_stopping_patience)
 
         for epoch in range(1, self.epochs + 1):
             train_loss = self._train_one_epoch(train_loader, optimizer, criterion)
@@ -229,16 +259,11 @@ class MLPRecommender(BaseRecommender):
             self.training_history["val_loss"].append(val_loss)
             self.epochs_trained = epoch
 
-            if self._has_improved(val_loss, best_val_loss):
-                best_val_loss, best_state = val_loss, copy.deepcopy(self._model.state_dict())
-                epochs_without_improvement = 0
-            else:
-                epochs_without_improvement += 1
-                if epochs_without_improvement >= self.early_stopping_patience:
-                    break
+            if tracker.update(val_loss, self._model.state_dict()):
+                break
 
-        if best_state is not None:
-            self._model.load_state_dict(best_state)
+        if tracker.best_state is not None:
+            self._model.load_state_dict(tracker.best_state)
 
     def fit(self, interactions: pd.DataFrame) -> None:
         """Treina o MLP via BCE + negative sampling sobre `interactions`.
@@ -250,14 +275,17 @@ class MLPRecommender(BaseRecommender):
         (precision/recall/ndcg/hit_rate) no notebook de experimentos.
         """
         torch.manual_seed(self.random_state)
+        if self.device.type == "cuda":
+            torch.cuda.manual_seed_all(self.random_state)
         rng = np.random.default_rng(self.random_state)
 
         self._build_id_mappings(interactions)
         self._seen_items_by_user = interactions.groupby("user_id")["item_id"].apply(set).to_dict()
+        seen_by_user_inner = self._build_full_seen_by_user_inner(interactions)
 
         train_rows, val_rows = self._holdout_split(interactions)
-        train_loader = self._make_loader(train_rows, rng, shuffle=True)
-        val_loader = self._make_loader(val_rows, rng, shuffle=False)
+        train_loader = self._make_loader(train_rows, rng, seen_by_user_inner, shuffle=True)
+        val_loader = self._make_loader(val_rows, rng, seen_by_user_inner, shuffle=False)
 
         self._model, optimizer, criterion = self._init_model()
         self._run_training_loop(train_loader, val_loader, optimizer, criterion)
@@ -271,6 +299,22 @@ class MLPRecommender(BaseRecommender):
         with torch.no_grad():
             logits = self._model(user_idx, item_idx)
         return logits.cpu().numpy()
+
+    def _mask_seen_items(self, scores: np.ndarray, user_id: int) -> None:
+        """Marca com -inf (in-place) os itens que o usuário já viu, pra excluir do ranking."""
+        for item_id in self._seen_items_by_user.get(user_id, set()):
+            inner = self._inner_by_item_id.get(item_id)
+            if inner is not None:
+                scores[inner] = -np.inf
+
+    def _top_k_items(self, scores: np.ndarray, k: int) -> list[int]:
+        """Retorna os `item_id` dos k maiores scores finitos, ordenados decrescente."""
+        k = min(k, int(np.isfinite(scores).sum()))
+        if k <= 0:
+            return []
+        top_k_unordered = np.argpartition(-scores, k - 1)[:k]
+        top_k = top_k_unordered[np.argsort(-scores[top_k_unordered])]
+        return [self._item_ids_by_inner[inner] for inner in top_k]
 
     def recommend(self, user_id: int, k: int) -> list[int]:
         """Retorna os top-k item_id com maior score, excluindo itens já vistos.
@@ -288,17 +332,8 @@ class MLPRecommender(BaseRecommender):
             return []
 
         scores = self._score_all_items(user_inner)
-        for item_id in self._seen_items_by_user.get(user_id, set()):
-            inner = self._inner_by_item_id.get(item_id)
-            if inner is not None:
-                scores[inner] = -np.inf
-
-        k = min(k, int(np.isfinite(scores).sum()))
-        if k <= 0:
-            return []
-        top_k_unordered = np.argpartition(-scores, k - 1)[:k]
-        top_k = top_k_unordered[np.argsort(-scores[top_k_unordered])]
-        return [self._item_ids_by_inner[inner] for inner in top_k]
+        self._mask_seen_items(scores, user_id)
+        return self._top_k_items(scores, k)
 
     def get_params(self) -> dict:
         return {

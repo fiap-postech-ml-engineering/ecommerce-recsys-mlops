@@ -36,7 +36,7 @@ class RecommenderService:
             logger.info("Modelo carregado do Registry: %s", model_uri)
         except Exception:
             self._model = None
-            logger.warning(
+            logger.exception(
                 "Modelo indisponível em %s — API sobe em modo degradado, "
                 "/recommend retornará 503 até o modelo ser promovido.",
                 model_uri,

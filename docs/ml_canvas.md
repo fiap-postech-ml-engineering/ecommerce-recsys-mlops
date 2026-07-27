@@ -36,7 +36,7 @@ Critério de sucesso: o MLP superar os baselines em ≥ 4 métricas.
 ## Modelos comparados
 | Modelo | Descrição | Biblioteca |
 | --- | --- | --- |
-| PopularityRecommender | Baseline — contagem dos itens mais comprados | Lógica própria |
+| PopularityRecommender | Baseline — soma do score ponderado de interações (view/cart/compra) por item | Lógica própria |
 | SVD | Fatoração de matriz | scikit-surprise |
 | MLP embedding-based | Embeddings de usuário/item + rede neural | PyTorch |
 

@@ -2,6 +2,7 @@
 
 from abc import ABC, abstractmethod
 
+import numpy as np
 import pandas as pd
 from sklearn.pipeline import FunctionTransformer, Pipeline
 
@@ -32,7 +33,7 @@ class WeightedInteractionPreprocessor(BasePreprocessor):
 
         Args:
             events: DataFrame com colunas ``user_id``, ``item_id``, ``event``,
-                ``value``, ``timestamp`` (saída de ``load_dataset()``).
+                ``value``, ``timestamp`` (saída de ``load_or_build_dataset()``).
 
         Returns:
             DataFrame com colunas ``user_id``, ``item_id``, ``score``, ``value``,
@@ -55,13 +56,34 @@ def build_interactions(events: pd.DataFrame) -> pd.DataFrame:
 
     Args:
         events: DataFrame com colunas ``user_id``, ``item_id``, ``event``, ``value``,
-            ``timestamp`` (saída de ``load_dataset()``), uma linha por evento individual.
+            ``timestamp`` (saída de ``load_or_build_dataset()``), uma linha por evento
+            individual.
 
     Returns:
         DataFrame com colunas ``user_id``, ``item_id``, ``score``, ``value``, ``timestamp``,
         uma linha por par usuário-item.
     """
     return validate_interactions(WeightedInteractionPreprocessor().transform(events))
+
+
+def apply_log_scaling(interactions: pd.DataFrame) -> pd.DataFrame:
+    """Aplica log1p ao score para atenuar outliers antes do treino de matrix factorization.
+
+    Ver docs/experimentos/0005: score sem cap (máx. 308 vs. mediana 1 no train_df
+    pós k-core) alimenta os modelos de matrix factorization/CF implícito (SVD, ALS,
+    BPR, ItemKNN) sem limite, instabilizando o treino. Não deve ser usado por
+    ``PopularityRecommender`` nem antes da validação do schema Pandera (que exige
+    ``score`` inteiro) — só no caminho de treino desses modelos.
+
+    Args:
+        interactions: DataFrame com coluna ``score`` (saída de ``build_interactions()``).
+
+    Returns:
+        Cópia do DataFrame com ``score`` transformado por ``log1p``.
+    """
+    df = interactions.copy()
+    df["score"] = np.log1p(df["score"])
+    return df
 
 
 def _extract_latest_item_values(item_properties: pd.DataFrame) -> pd.Series:

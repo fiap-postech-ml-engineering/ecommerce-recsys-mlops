@@ -48,3 +48,4 @@ o registro é atualizado para `Aceito` (ou descartado) quando a correção for d
 | [0007](0007-svd-explicito-objetivo-incompativel.md) | SVD explícito otimiza objetivo incompatível com o problema (não é só esparsidade) | Aceito |
 | [0008](0008-als-bpr-itemknn-comparacao.md) | ALS, BPR e BM25 ItemKNN: comparação de 3 famílias de CF implícito | Aceito |
 | [0009](0009-interpretacao-ndcg-protocolo-avaliacao.md) | Interpretação do NDCG@10 medido: protocolo de avaliação e posição do hit | Aceito |
+| [0010](0010-mlp-arquitetura-implicita-early-stopping.md) | Arquitetura do MLP: torre única sobre embeddings concatenados, treino implícito e early stopping interno | Aceito |

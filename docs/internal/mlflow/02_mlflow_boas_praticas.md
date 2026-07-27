@@ -26,7 +26,7 @@ só guarda os três experimentos canônicos do projeto, escolhidos via
 | Experimento | Quando usar |
 | --- | --- |
 | `.../02 - ECOMM_RECSYS - notebook_baselines_training` | Exploração em `notebooks/02_experiments.ipynb` dos baselines (Popularity, SVD) |
-| `.../02 - ECOMM_RECSYS - notebook_mlp_training` | Exploração em `notebooks/02_experiments.ipynb` do MLP (arquitetura, hiperparâmetros) |
+| `.../02 - ECOMM_RECSYS - notebook_mlp_training` | Exploração em `notebooks/03_mlp.ipynb` do MLP (arquitetura, hiperparâmetros) — ver [ADR 0003](../../experimentos/0003-mlp-fora-do-notebook-02.md) |
 | `.../02 - ECOMM_RECSYS - Production` (default de `Settings.MLFLOW_EXPERIMENT_NAME`) | Runs "oficiais" disparadas por `src/training/train.py` / pipeline DVC: baseline, tuning, final |
 
 `configure_mlflow_tracking()` sem argumentos usa o experimento de produção (default de

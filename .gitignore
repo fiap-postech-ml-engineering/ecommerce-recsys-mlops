@@ -225,3 +225,7 @@ __marimo__/
 # Data
 data/raw/*
 data/processed/*
+
+# MLflow (backend local de tracking, usado em validação sem credenciais Databricks)
+logs/
+models/mlruns/

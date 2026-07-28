@@ -67,3 +67,11 @@ def test_recommend_returns_items_when_model_ready(monkeypatch):
 
     assert response.status_code == 200
     assert response.json() == {"user_id": 1, "recommendations": [1, 2, 3]}
+
+
+def test_recommend_rejects_invalid_payload():
+    client = TestClient(app)
+
+    response = client.post("/recommend", json={"user_id": "not-an-int", "k": 0})
+
+    assert response.status_code == 422

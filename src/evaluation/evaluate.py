@@ -178,7 +178,7 @@ def evaluate_model(
         "ndcg": _safe_mean(scores["ndcg"]),
         "hit_rate": _safe_mean(scores["hit_rate"]),
         "coverage": coverage(all_recs, catalog_size),
-        "revenue": _safe_mean(scores["revenue"]),
+        "revenue": sum(scores["revenue"]),
     }
 
 

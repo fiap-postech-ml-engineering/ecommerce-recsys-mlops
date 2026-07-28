@@ -1,0 +1,34 @@
+stages:
+  preprocess:
+    cmd: python -m src.data.preprocess
+    deps:
+      - data/raw/
+      - src/data/preprocess.py
+      - src/data/
+    outs:
+      - data/processed/interactions.parquet
+  train:
+    cmd: python -m src.training.train
+    deps:
+      - data/processed/interactions.parquet
+      - src/training/train.py
+      - src/data/
+      - src/models/
+      - src/tracking/mlflow_utils.py
+    params:
+      - model
+    outs:
+      - models/model.joblib
+  evaluate:
+    cmd: python -m src.evaluation.evaluate
+    deps:
+      - models/model.joblib
+      - data/processed/interactions.parquet
+      - src/evaluation/evaluate.py
+      - src/data/
+      - src/metrics/
+    metrics:
+      - metrics.json:
+          cache: false
+    plots:
+      - plots/metrics.png

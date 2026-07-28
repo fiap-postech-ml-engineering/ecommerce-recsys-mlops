@@ -1,0 +1,4 @@
+model:
+  type: itemknn
+  config:
+    n_neighbors: 50

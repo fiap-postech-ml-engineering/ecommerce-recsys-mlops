@@ -75,3 +75,27 @@ def test_recommend_rejects_invalid_payload():
     response = client.post("/recommend", json={"user_id": "not-an-int", "k": 0})
 
     assert response.status_code == 422
+
+
+def test_health_reports_model_not_ready(monkeypatch):
+    from src.api.inference import recommender_service
+
+    monkeypatch.setattr(recommender_service, "_model", None)
+
+    client = TestClient(app)
+    response = client.get("/health")
+
+    assert response.status_code == 200
+    assert response.json() == {"api_status": "operacional", "modelo_carregado": False}
+
+
+def test_health_reports_model_ready(monkeypatch):
+    from src.api.inference import recommender_service
+
+    monkeypatch.setattr(recommender_service, "_model", object())
+
+    client = TestClient(app)
+    response = client.get("/health")
+
+    assert response.status_code == 200
+    assert response.json() == {"api_status": "operacional", "modelo_carregado": True}

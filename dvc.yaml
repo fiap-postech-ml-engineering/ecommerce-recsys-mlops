@@ -4,8 +4,7 @@ stages:
     deps:
       - data/raw/
       - src/data/preprocess.py
-      - src/data/loader.py
-      - src/data/preprocessor.py
+      - src/data/
     outs:
       - data/processed/interactions.parquet
   train:
@@ -13,7 +12,9 @@ stages:
     deps:
       - data/processed/interactions.parquet
       - src/training/train.py
+      - src/data/
       - src/models/
+      - src/tracking/mlflow_utils.py
     params:
       - model
     outs:
@@ -24,6 +25,7 @@ stages:
       - models/model.joblib
       - data/processed/interactions.parquet
       - src/evaluation/evaluate.py
+      - src/data/
       - src/metrics/
     metrics:
       - metrics.json:

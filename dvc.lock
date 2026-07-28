@@ -8,18 +8,15 @@ stages:
       md5: 19cdee87944c59fc15c51396fe37cd88.dir
       size: 987498023
       nfiles: 4
-    - path: src/data/loader.py
+    - path: src/data/
       hash: md5
-      md5: 52fd5496fc97f67f1bffcd5db63fa9ff
-      size: 3465
+      md5: 022f3879be8d6bb79242a205985e8fd4.dir
+      size: 44125
+      nfiles: 14
     - path: src/data/preprocess.py
       hash: md5
       md5: 389460bb7fbf730a8b4b6a0a327e425d
       size: 1529
-    - path: src/data/preprocessor.py
-      hash: md5
-      md5: 76d104ea52a56ed7c950e548941b8576
-      size: 5807
     outs:
     - path: data/processed/interactions.parquet
       hash: md5
@@ -32,11 +29,21 @@ stages:
       hash: md5
       md5: 0798e9d483f452914fb7221c3bc712e8
       size: 32590742
+    - path: src/data/
+      hash: md5
+      md5: 022f3879be8d6bb79242a205985e8fd4.dir
+      size: 44125
+      nfiles: 14
     - path: src/models/
       hash: md5
       md5: 77c5cb056007e3a56bf69669b29b9586.dir
       size: 89208
       nfiles: 20
+    - path: src/tracking/mlflow_utils.py
+      hash: md5
+      md5: 2a1dfdac38e2c7ce07e2394e6b608515
+      size: 11698
+      isexec: true
     - path: src/training/train.py
       hash: md5
       md5: aa70d15f1754a87bd9ca45d9a8a55a0c
@@ -63,6 +70,11 @@ stages:
       hash: md5
       md5: 232d3a8d60e706dc227f778be4a87ff0
       size: 21670822
+    - path: src/data/
+      hash: md5
+      md5: 022f3879be8d6bb79242a205985e8fd4.dir
+      size: 44125
+      nfiles: 14
     - path: src/evaluation/evaluate.py
       hash: md5
       md5: a24ca80f0140d1907a3a55dd49d36f4c

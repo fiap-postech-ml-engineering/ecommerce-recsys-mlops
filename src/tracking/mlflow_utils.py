@@ -10,8 +10,10 @@ import re
 import subprocess
 from typing import Any
 
+import joblib
 import mlflow
 from mlflow.tracking import MlflowClient
+import pandas as pd
 
 from src.config import LOGS_DIR, MODELS_DIR, get_settings
 
@@ -78,6 +80,12 @@ def configure_mlflow_tracking(
             )
 
         mlflow.set_tracking_uri(tracking_uri or "databricks")
+        # O Workspace Model Registry legado está desabilitado neste workspace
+        # (política de admin) — usa Unity Catalog (default do MLflow quando
+        # tracking_uri="databricks"), que exige nomes de 3 níveis
+        # (catalog.schema.model, ver Settings.MLFLOW_MODEL_NAME) mas suporta os
+        # mesmos aliases staging/production.
+        mlflow.set_registry_uri("databricks-uc")
 
         try:
             mlflow.set_experiment(experiment_name)
@@ -318,3 +326,40 @@ def start_notebook_run(
         if params is not None:
             mlflow.log_params(params)
         yield run
+
+
+class ItemKNNPyfuncWrapper(mlflow.pyfunc.PythonModel):
+    """Adapta `BaseRecommender.recommend()` à interface tabular do MLflow pyfunc.
+
+    Necessário porque `ItemKNNRecommender` não é um estimador scikit-learn (usa
+    `implicit.BM25Recommender` internamente, sem `predict()`) — nenhum flavor built-in do
+    MLflow serve para registrá-lo no Model Registry.
+    """
+
+    def load_context(self, context: mlflow.pyfunc.PythonModelContext) -> None:
+        """Carrega o `BaseRecommender` treinado a partir do artefato "model"."""
+        self.model = joblib.load(context.artifacts["model"])
+
+    def predict(
+        self,
+        context: mlflow.pyfunc.PythonModelContext,
+        model_input: pd.DataFrame,
+    ) -> list[list[int]]:
+        """Retorna as recomendações para cada linha de `model_input`.
+
+        Args:
+            context: Contexto pyfunc (não utilizado além do `load_context`).
+            model_input: DataFrame com coluna `user_id` obrigatória e `k` opcional
+                (default `Settings.RECOMMENDATION_K` quando ausente na linha).
+
+        Returns:
+            Lista de listas de `item_id`, uma por linha de `model_input`.
+        """
+        default_k = get_settings().RECOMMENDATION_K
+        has_k_column = "k" in model_input.columns
+        return [
+            self.model.recommend(
+                row.user_id, int(row.k) if has_k_column and pd.notna(row.k) else default_k
+            )
+            for row in model_input.itertuples(index=False)
+        ]

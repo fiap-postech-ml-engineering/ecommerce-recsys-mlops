@@ -259,9 +259,15 @@ Diretrizes gerais (os detalhes exatos por modelo são definidos quando
 - **Run vs. versão registrada**: toda run que treina um modelo loga o artefato
   (`log_model`/`log_artifact`), mas só a run "campeã" (fase `final`) chama
   `mlflow.register_model(...)`, criando uma nova versão de
-  `ecomm-recsys-<model_type>` no Model Registry.
-- Promoção para `staging`/`production` é feita via aliases no Model Registry,
-  manualmente após avaliação.
+  `Settings.MLFLOW_MODEL_NAME` no Model Registry.
+- O Workspace Model Registry legado está desabilitado neste workspace Databricks
+  (política de admin) — o registro usa Unity Catalog (`registry_uri=databricks-uc`),
+  daí `MLFLOW_MODEL_NAME` precisar do formato de 3 níveis
+  `catalog.schema.model_name` (hoje `workspace.default.ecomm-recsys-itemknn`), não
+  só `ecomm-recsys-<model_type>`.
+- Promoção para `staging`/`production` é feita via aliases no Model Registry
+  (`MlflowClient.set_registered_model_alias`, ver `src/tracking/promote_model.py`),
+  manualmente após avaliação — UC suporta os mesmos aliases que o registry legado.
 
 -----
 

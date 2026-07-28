@@ -1,0 +1,83 @@
+schema: '2.0'
+stages:
+  preprocess:
+    cmd: python -m src.data.preprocess
+    deps:
+    - path: data/raw/
+      hash: md5
+      md5: 19cdee87944c59fc15c51396fe37cd88.dir
+      size: 987498023
+      nfiles: 4
+    - path: src/data/loader.py
+      hash: md5
+      md5: 52fd5496fc97f67f1bffcd5db63fa9ff
+      size: 3465
+    - path: src/data/preprocess.py
+      hash: md5
+      md5: 389460bb7fbf730a8b4b6a0a327e425d
+      size: 1529
+    - path: src/data/preprocessor.py
+      hash: md5
+      md5: 76d104ea52a56ed7c950e548941b8576
+      size: 5807
+    outs:
+    - path: data/processed/interactions.parquet
+      hash: md5
+      md5: 0798e9d483f452914fb7221c3bc712e8
+      size: 32590742
+  train:
+    cmd: python -m src.training.train
+    deps:
+    - path: data/processed/interactions.parquet
+      hash: md5
+      md5: 0798e9d483f452914fb7221c3bc712e8
+      size: 32590742
+    - path: src/models/
+      hash: md5
+      md5: 77c5cb056007e3a56bf69669b29b9586.dir
+      size: 89208
+      nfiles: 20
+    - path: src/training/train.py
+      hash: md5
+      md5: aa70d15f1754a87bd9ca45d9a8a55a0c
+      size: 4680
+    params:
+      params.yaml:
+        model:
+          type: itemknn
+          config:
+            n_neighbors: 50
+    outs:
+    - path: models/model.joblib
+      hash: md5
+      md5: 232d3a8d60e706dc227f778be4a87ff0
+      size: 21670822
+  evaluate:
+    cmd: python -m src.evaluation.evaluate
+    deps:
+    - path: data/processed/interactions.parquet
+      hash: md5
+      md5: 0798e9d483f452914fb7221c3bc712e8
+      size: 32590742
+    - path: models/model.joblib
+      hash: md5
+      md5: 232d3a8d60e706dc227f778be4a87ff0
+      size: 21670822
+    - path: src/evaluation/evaluate.py
+      hash: md5
+      md5: a24ca80f0140d1907a3a55dd49d36f4c
+      size: 8923
+    - path: src/metrics/
+      hash: md5
+      md5: 86f98b6fa52b15d486ceaf8069298c3a.dir
+      size: 10119
+      nfiles: 6
+    outs:
+    - path: metrics.json
+      hash: md5
+      md5: 7780a6ca64f2979a2b783ea3340c7335
+      size: 197
+    - path: plots/metrics.png
+      hash: md5
+      md5: 65eeb2c4981138867d36f7e3a0a3acd3
+      size: 29499

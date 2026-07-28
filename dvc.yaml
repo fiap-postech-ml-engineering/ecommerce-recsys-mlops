@@ -1,0 +1,32 @@
+stages:
+  preprocess:
+    cmd: python -m src.data.preprocess
+    deps:
+      - data/raw/
+      - src/data/preprocess.py
+      - src/data/loader.py
+      - src/data/preprocessor.py
+    outs:
+      - data/processed/interactions.parquet
+  train:
+    cmd: python -m src.training.train
+    deps:
+      - data/processed/interactions.parquet
+      - src/training/train.py
+      - src/models/
+    params:
+      - model
+    outs:
+      - models/model.joblib
+  evaluate:
+    cmd: python -m src.evaluation.evaluate
+    deps:
+      - models/model.joblib
+      - data/processed/interactions.parquet
+      - src/evaluation/evaluate.py
+      - src/metrics/
+    metrics:
+      - metrics.json:
+          cache: false
+    plots:
+      - plots/metrics.png

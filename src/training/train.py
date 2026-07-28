@@ -26,6 +26,10 @@ logger = logging.getLogger(__name__)
 PARAMS_PATH = BASE_DIR / "params.yaml"
 INTERACTIONS_PATH = BASE_DIR / "data" / "processed" / "interactions.parquet"
 
+# apply_log_scaling() não deve ser usada por PopularityRecommender — ver docstring
+# em src/data/preprocessor.py.
+MODEL_TYPES_WITHOUT_LOG_SCALING = {"popularity"}
+
 
 def _load_model_config(params_path: Path = PARAMS_PATH) -> tuple[str, dict]:
     """Lê `model.type` e `model.config` de `params.yaml`.
@@ -47,7 +51,7 @@ def _load_model_config(params_path: Path = PARAMS_PATH) -> tuple[str, dict]:
     return model_type, config
 
 
-def _load_train_data(interactions_path: Path = INTERACTIONS_PATH) -> pd.DataFrame:
+def _load_train_data(model_type: str, interactions_path: Path = INTERACTIONS_PATH) -> pd.DataFrame:
     """Carrega as interações processadas e prepara o `train_df` para o `fit`.
 
     Aplica a mesma sequência usada em notebooks/02_experiments.ipynb e
@@ -56,10 +60,13 @@ def _load_train_data(interactions_path: Path = INTERACTIONS_PATH) -> pd.DataFram
     `val_df`/`test_df` não são tocados neste script.
 
     Args:
+        model_type: Tipo de modelo a treinar (de `params.yaml`), usado para decidir
+            se o log1p scaling deve ser aplicado.
         interactions_path: Caminho para o parquet de interações pré-processadas.
 
     Returns:
-        `train_df` filtrado e com score em escala log1p, pronto para `model.fit()`.
+        `train_df` filtrado e, exceto para `PopularityRecommender`, com score em
+        escala log1p, pronto para `model.fit()`.
     """
     settings = get_settings()
     interactions = pd.read_parquet(interactions_path)
@@ -76,6 +83,9 @@ def _load_train_data(interactions_path: Path = INTERACTIONS_PATH) -> pd.DataFram
         min_user_interactions=settings.MIN_USER_INTERACTIONS,
         min_item_interactions=settings.MIN_ITEM_INTERACTIONS,
     )
+    if model_type in MODEL_TYPES_WITHOUT_LOG_SCALING:
+        return train_df
+
     # Score sem cap desestabiliza os modelos de CF implícito (SVD/ALS/BPR/ItemKNN) —
     # ver docs/experimentos/0005. O ItemKNN vencedor (ADR 0010) foi avaliado sobre
     # o score log-escalado, não o bruto.
@@ -102,7 +112,7 @@ def main() -> None:
     model_type, config = _load_model_config()
     logger.info("Treinando modelo de produção: %s (config=%s)", model_type, config)
 
-    train_df = _load_train_data()
+    train_df = _load_train_data(model_type)
     model = RecommenderFactory.create(model_type, config)
     model.fit(train_df)
 

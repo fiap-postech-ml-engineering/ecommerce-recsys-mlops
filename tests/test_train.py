@@ -59,13 +59,33 @@ def test_load_train_data_applies_split_filter_and_log_scaling(tmp_path):
         ) as mock_filter,
         patch("src.training.train.apply_log_scaling", return_value=scaled_df) as mock_scale,
     ):
-        result = _load_train_data(interactions_path)
+        result = _load_train_data("itemknn", interactions_path)
 
     mock_read.assert_called_once_with(interactions_path)
     mock_split.assert_called_once()
     mock_filter.assert_called_once()
     mock_scale.assert_called_once_with(train_df)
     assert result is scaled_df
+
+
+@pytest.mark.unit
+def test_load_train_data_skips_log_scaling_for_popularity(tmp_path):
+    interactions_path = tmp_path / "interactions.parquet"
+    raw_interactions = pd.DataFrame({"user_id": [1], "item_id": [2], "score": [3]})
+    train_df = pd.DataFrame({"user_id": [1], "item_id": [2], "score": [3]})
+    val_df = pd.DataFrame({"user_id": [], "item_id": [], "score": []})
+    test_df = pd.DataFrame({"user_id": [], "item_id": [], "score": []})
+
+    with (
+        patch("src.training.train.pd.read_parquet", return_value=raw_interactions),
+        patch("src.training.train.temporal_split", return_value=(train_df, val_df, test_df)),
+        patch("src.training.train.k_core_filter", return_value=(train_df, val_df, test_df)),
+        patch("src.training.train.apply_log_scaling") as mock_scale,
+    ):
+        result = _load_train_data("popularity", interactions_path)
+
+    mock_scale.assert_not_called()
+    assert result is train_df
 
 
 @pytest.mark.unit

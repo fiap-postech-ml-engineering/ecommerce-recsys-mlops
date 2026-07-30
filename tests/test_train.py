@@ -1,5 +1,5 @@
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import ANY, MagicMock, patch
 
 import pandas as pd
 import pytest
@@ -141,3 +141,9 @@ def test_main_trains_persists_and_logs_to_mlflow_without_notebook_run():
     )
     mock_mlflow.start_run.assert_called_once_with(tags={"model_type": "itemknn"})
     mock_mlflow.log_params.assert_called_once_with(fake_model.get_params.return_value)
+    mock_mlflow.pyfunc.log_model.assert_called_once_with(
+        artifact_path="model",
+        python_model=ANY,
+        artifacts={"model": "models/model.joblib"},
+        input_example=ANY,
+    )

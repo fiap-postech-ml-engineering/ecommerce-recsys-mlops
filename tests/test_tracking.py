@@ -1,9 +1,10 @@
 import datetime as dt
 import os
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import mlflow
 from mlflow.tracking import MlflowClient
+import pandas as pd
 import pytest
 
 from src.config import get_settings
@@ -15,6 +16,7 @@ from src.tracking import (
     start_notebook_run,
 )
 from src.tracking.mlflow_utils import (
+    BaseRecommenderPyfuncWrapper,
     _build_run_name,
     _get_or_create_parent_run,
     _validate_notebook_run_inputs,
@@ -454,3 +456,48 @@ def test_start_notebook_run_no_params_does_not_log_params(tmp_path, monkeypatch)
     assert data.params == {}
 
     mlflow.set_tracking_uri("")
+
+
+@pytest.mark.unit
+def test_pyfunc_wrapper_load_context_loads_model_via_joblib():
+    wrapper = BaseRecommenderPyfuncWrapper()
+    fake_model = MagicMock()
+    context = MagicMock()
+    context.artifacts = {"model": "models/model.joblib"}
+
+    with patch("src.tracking.mlflow_utils.joblib.load", return_value=fake_model) as mock_load:
+        wrapper.load_context(context)
+
+    mock_load.assert_called_once_with("models/model.joblib")
+    assert wrapper.model is fake_model
+
+
+@pytest.mark.unit
+def test_pyfunc_wrapper_predict_uses_k_column_when_present():
+    wrapper = BaseRecommenderPyfuncWrapper()
+    wrapper.model = MagicMock()
+    wrapper.model.recommend.side_effect = [[10, 20], [30]]
+    model_input = pd.DataFrame({"user_id": [1, 2], "k": [2, 1]})
+
+    result = wrapper.predict(context=None, model_input=model_input)
+
+    assert result == [[10, 20], [30]]
+    wrapper.model.recommend.assert_any_call(1, 2)
+    wrapper.model.recommend.assert_any_call(2, 1)
+
+
+@pytest.mark.unit
+def test_pyfunc_wrapper_predict_defaults_k_when_column_missing(monkeypatch):
+    monkeypatch.setattr(
+        "src.tracking.mlflow_utils.get_settings",
+        lambda: type("S", (), {"RECOMMENDATION_K": 10})(),
+    )
+    wrapper = BaseRecommenderPyfuncWrapper()
+    wrapper.model = MagicMock()
+    wrapper.model.recommend.return_value = [1, 2, 3]
+    model_input = pd.DataFrame({"user_id": [5]})
+
+    result = wrapper.predict(context=None, model_input=model_input)
+
+    assert result == [[1, 2, 3]]
+    wrapper.model.recommend.assert_called_once_with(5, 10)

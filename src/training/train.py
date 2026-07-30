@@ -19,7 +19,11 @@ from src.data.preprocessor import apply_log_scaling
 from src.data.split import temporal_split
 from src.models.base import BaseRecommender
 from src.models.factory import RecommenderFactory
-from src.tracking.mlflow_utils import build_experiment_tags, configure_mlflow_tracking
+from src.tracking.mlflow_utils import (
+    BaseRecommenderPyfuncWrapper,
+    build_experiment_tags,
+    configure_mlflow_tracking,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -126,8 +130,18 @@ def main() -> None:
         dataset_name="retailrocket",
         extra_tags={"source": "dvc_pipeline"},
     )
+    settings = get_settings()
+    input_example = pd.DataFrame(
+        {"user_id": [int(train_df["user_id"].iloc[0])], "k": [settings.RECOMMENDATION_K]}
+    )
     with mlflow.start_run(tags=tags):
         mlflow.log_params(model.get_params())
+        mlflow.pyfunc.log_model(
+            artifact_path="model",
+            python_model=BaseRecommenderPyfuncWrapper(),
+            artifacts={"model": str(model_path)},
+            input_example=input_example,
+        )
 
     logger.info("Treino concluído.")
 

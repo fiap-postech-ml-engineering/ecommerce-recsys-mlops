@@ -364,3 +364,10 @@ class BaseRecommenderPyfuncWrapper(mlflow.pyfunc.PythonModel):
             )
             for row in model_input.itertuples(index=False)
         ]
+
+
+# Alias de compatibilidade: versões do modelo já registradas no MLflow Registry antes da
+# TCF1-158 foram serializadas via cloudpickle com o nome `ItemKNNPyfuncWrapper` — cloudpickle
+# resolve a classe pelo atributo do módulo no momento do load, então remover este alias
+# quebraria o unpickling dessas versões. Não usar em código novo.
+ItemKNNPyfuncWrapper = BaseRecommenderPyfuncWrapper

@@ -13,8 +13,5 @@ async def recommend(payload: RecommendRequest) -> RecommendResponse:
             status_code=503,
             detail="Modelo ainda não disponível em Production no MLflow Registry.",
         )
-    try:
-        items = recommender_service.recommend(payload.user_id, payload.k)
-    except NotImplementedError as exc:
-        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    items = recommender_service.recommend(payload.user_id, payload.k)
     return RecommendResponse(user_id=payload.user_id, recommendations=items)

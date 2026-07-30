@@ -1,9 +1,8 @@
 """Isola o carregamento do modelo de produção e a lógica de servir recomendações.
 
-Quando o modelo ainda não está disponível no Registry (ou a decisão de como
-scorear candidatos ainda não foi tomada), o serviço opera em modo degradado:
-a API sobe normalmente, o healthcheck responde, mas /recommend retorna 503
-com uma mensagem clara em vez de derrubar a aplicação inteira.
+Quando o modelo ainda não está disponível no Registry, o serviço opera em modo
+degradado: a API sobe normalmente, o healthcheck responde, mas /recommend
+retorna 503 com uma mensagem clara em vez de derrubar a aplicação inteira.
 """
 
 from __future__ import annotations
@@ -11,6 +10,7 @@ from __future__ import annotations
 import logging
 
 import mlflow
+import pandas as pd
 
 from src.config import get_settings
 from src.tracking.mlflow_utils import configure_mlflow_tracking
@@ -50,12 +50,9 @@ class RecommenderService:
         if self._model is None:
             raise RuntimeError("Modelo ainda não disponível em Production.")
 
-        # TODO(quando a estratégia de candidate scoring for definida):
-        # o modelo registrado expõe (user_idx, item_idx) -> score (ver
-        # docs/internal/mlflow/02_mlflow_boas_praticas.md, seção 5), não
-        # recommend(user_id, k) diretamente. Falta decidir contra qual
-        # conjunto de itens candidatos rodar o score antes de rankear o top-k.
-        raise NotImplementedError("Estratégia de candidate scoring pendente de definição do time.")
+        model_input = pd.DataFrame({"user_id": [user_id], "k": [k]})
+        predictions = self._model.predict(model_input)
+        return list(predictions[0])
 
 
 recommender_service = RecommenderService()

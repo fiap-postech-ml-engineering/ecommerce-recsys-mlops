@@ -1,6 +1,6 @@
 from .mlflow_utils import (
     ALLOWED_MODEL_TYPES,
-    ItemKNNPyfuncWrapper,
+    BaseRecommenderPyfuncWrapper,
     build_experiment_tags,
     configure_mlflow_tracking,
     get_git_user,
@@ -10,7 +10,7 @@ from .mlflow_utils import (
 
 __all__ = [
     "ALLOWED_MODEL_TYPES",
-    "ItemKNNPyfuncWrapper",
+    "BaseRecommenderPyfuncWrapper",
     "build_experiment_tags",
     "configure_mlflow_tracking",
     "get_git_user",

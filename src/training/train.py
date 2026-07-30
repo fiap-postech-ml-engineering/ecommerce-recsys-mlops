@@ -20,7 +20,7 @@ from src.data.split import temporal_split
 from src.models.base import BaseRecommender
 from src.models.factory import RecommenderFactory
 from src.tracking.mlflow_utils import (
-    ItemKNNPyfuncWrapper,
+    BaseRecommenderPyfuncWrapper,
     build_experiment_tags,
     configure_mlflow_tracking,
 )
@@ -138,7 +138,7 @@ def main() -> None:
         mlflow.log_params(model.get_params())
         mlflow.pyfunc.log_model(
             artifact_path="model",
-            python_model=ItemKNNPyfuncWrapper(),
+            python_model=BaseRecommenderPyfuncWrapper(),
             artifacts={"model": str(model_path)},
             input_example=input_example,
         )

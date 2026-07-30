@@ -16,7 +16,7 @@ from src.tracking import (
     start_notebook_run,
 )
 from src.tracking.mlflow_utils import (
-    ItemKNNPyfuncWrapper,
+    BaseRecommenderPyfuncWrapper,
     _build_run_name,
     _get_or_create_parent_run,
     _validate_notebook_run_inputs,
@@ -460,7 +460,7 @@ def test_start_notebook_run_no_params_does_not_log_params(tmp_path, monkeypatch)
 
 @pytest.mark.unit
 def test_pyfunc_wrapper_load_context_loads_model_via_joblib():
-    wrapper = ItemKNNPyfuncWrapper()
+    wrapper = BaseRecommenderPyfuncWrapper()
     fake_model = MagicMock()
     context = MagicMock()
     context.artifacts = {"model": "models/model.joblib"}
@@ -474,7 +474,7 @@ def test_pyfunc_wrapper_load_context_loads_model_via_joblib():
 
 @pytest.mark.unit
 def test_pyfunc_wrapper_predict_uses_k_column_when_present():
-    wrapper = ItemKNNPyfuncWrapper()
+    wrapper = BaseRecommenderPyfuncWrapper()
     wrapper.model = MagicMock()
     wrapper.model.recommend.side_effect = [[10, 20], [30]]
     model_input = pd.DataFrame({"user_id": [1, 2], "k": [2, 1]})
@@ -492,7 +492,7 @@ def test_pyfunc_wrapper_predict_defaults_k_when_column_missing(monkeypatch):
         "src.tracking.mlflow_utils.get_settings",
         lambda: type("S", (), {"RECOMMENDATION_K": 10})(),
     )
-    wrapper = ItemKNNPyfuncWrapper()
+    wrapper = BaseRecommenderPyfuncWrapper()
     wrapper.model = MagicMock()
     wrapper.model.recommend.return_value = [1, 2, 3]
     model_input = pd.DataFrame({"user_id": [5]})

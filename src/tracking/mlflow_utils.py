@@ -328,12 +328,13 @@ def start_notebook_run(
         yield run
 
 
-class ItemKNNPyfuncWrapper(mlflow.pyfunc.PythonModel):
-    """Adapta `BaseRecommender.recommend()` à interface tabular do MLflow pyfunc.
+class BaseRecommenderPyfuncWrapper(mlflow.pyfunc.PythonModel):
+    """Adapta `BaseRecommender.recommend()` (Strategy) à interface tabular do MLflow pyfunc.
 
-    Necessário porque `ItemKNNRecommender` não é um estimador scikit-learn (usa
-    `implicit.BM25Recommender` internamente, sem `predict()`) — nenhum flavor built-in do
-    MLflow serve para registrá-lo no Model Registry.
+    Necessário porque nenhum `BaseRecommender` (Popularity, SVD, ItemKNN, MLP) é um
+    estimador scikit-learn com `predict()` — nenhum flavor built-in do MLflow serve para
+    registrá-lo no Model Registry. Funciona para qualquer implementação de
+    `BaseRecommender`, já que depende apenas da interface comum `recommend()`.
     """
 
     def load_context(self, context: mlflow.pyfunc.PythonModelContext) -> None:

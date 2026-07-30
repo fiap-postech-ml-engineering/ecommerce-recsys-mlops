@@ -20,7 +20,7 @@ def test_find_latest_pipeline_run_returns_run_id_of_top_result():
     run.info.run_id = "abc123"
     client.search_runs.return_value = [run]
 
-    run_id = _find_latest_pipeline_run(client, "exp-1")
+    run_id = _find_latest_pipeline_run(client, "exp-1", "itemknn")
 
     assert run_id == "abc123"
     client.search_runs.assert_called_once_with(
@@ -32,12 +32,30 @@ def test_find_latest_pipeline_run_returns_run_id_of_top_result():
 
 
 @pytest.mark.unit
+def test_find_latest_pipeline_run_filters_by_given_model_type():
+    client = MagicMock()
+    run = MagicMock()
+    run.info.run_id = "def456"
+    client.search_runs.return_value = [run]
+
+    run_id = _find_latest_pipeline_run(client, "exp-1", "svd")
+
+    assert run_id == "def456"
+    client.search_runs.assert_called_once_with(
+        experiment_ids=["exp-1"],
+        filter_string="tags.source = 'dvc_pipeline' AND tags.model_type = 'svd'",
+        order_by=["attributes.start_time DESC"],
+        max_results=1,
+    )
+
+
+@pytest.mark.unit
 def test_find_latest_pipeline_run_raises_when_no_run_found():
     client = MagicMock()
     client.search_runs.return_value = []
 
     with pytest.raises(RuntimeError, match="Nenhum run"):
-        _find_latest_pipeline_run(client, "exp-1")
+        _find_latest_pipeline_run(client, "exp-1", "itemknn")
 
 
 @pytest.mark.unit
@@ -84,6 +102,7 @@ def test_promote_to_staging_registers_sets_alias_and_logs_sample():
             "src.tracking.promote_model._find_latest_pipeline_run", return_value="run-1"
         ) as mock_find_run,
         patch("src.tracking.promote_model._log_sample_recommendations") as mock_log_sample,
+        patch("src.tracking.promote_model._load_model_config", return_value=("itemknn", {})),
     ):
         mock_settings.return_value.MLFLOW_MODEL_NAME = "ecomm-recsys-itemknn"
         mock_mlflow.register_model.return_value = fake_model_version
@@ -92,7 +111,7 @@ def test_promote_to_staging_registers_sets_alias_and_logs_sample():
 
         promote_to_staging()
 
-    mock_find_run.assert_called_once_with(mock_client, "exp-1")
+    mock_find_run.assert_called_once_with(mock_client, "exp-1", "itemknn")
     mock_mlflow.register_model.assert_called_once_with(
         "runs:/run-1/model", name="ecomm-recsys-itemknn"
     )

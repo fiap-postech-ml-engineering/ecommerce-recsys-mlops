@@ -18,8 +18,9 @@ from mlflow.tracking import MlflowClient
 import pandas as pd
 
 from src.config import MODELS_DIR, get_settings
-from src.models.itemknn import ItemKNNRecommender
+from src.models.base import BaseRecommender
 from src.tracking.mlflow_utils import configure_mlflow_tracking
+from src.training.train import _load_model_config
 
 logger = logging.getLogger(__name__)
 
@@ -27,29 +28,34 @@ MODEL_PATH = MODELS_DIR / "model.joblib"
 SAMPLE_USER_COUNT = 5
 
 
-def _find_latest_pipeline_run(client: MlflowClient, experiment_id: str) -> str:
-    """Localiza o run mais recente gerado pelo pipeline DVC (`train.py`).
+def _find_latest_pipeline_run(client: MlflowClient, experiment_id: str, model_type: str) -> str:
+    """Localiza o run mais recente gerado pelo pipeline DVC (`train.py`) para `model_type`.
 
     Args:
         client: Cliente MLflow ativo.
         experiment_id: Experimento onde buscar.
+        model_type: Valor de `tags.model_type` a filtrar — o mesmo `model.type` lido de
+            `params.yaml` pelo `train.py` (Factory), evitando acoplar este script a um
+            modelo específico.
 
     Returns:
-        `run_id` do run mais recente com `tags.source == "dvc_pipeline"`.
+        `run_id` do run mais recente com `tags.source == "dvc_pipeline"` e o
+        `model_type` informado.
 
     Raises:
         RuntimeError: Se nenhum run correspondente for encontrado.
     """
     runs = client.search_runs(
         experiment_ids=[experiment_id],
-        filter_string="tags.source = 'dvc_pipeline' AND tags.model_type = 'itemknn'",
+        filter_string=(f"tags.source = 'dvc_pipeline' AND tags.model_type = '{model_type}'"),
         order_by=["attributes.start_time DESC"],
         max_results=1,
     )
     if not runs:
         raise RuntimeError(
-            "Nenhum run com tags.source='dvc_pipeline' encontrado. Rode "
-            "`python -m src.training.train` (ou `dvc repro`) antes de promover."
+            f"Nenhum run com tags.source='dvc_pipeline' e tags.model_type='{model_type}' "
+            "encontrado. Rode `python -m src.training.train` (ou `dvc repro`) antes de "
+            "promover."
         )
     return runs[0].info.run_id
 
@@ -70,7 +76,7 @@ def _sample_user_ids(model_path=MODEL_PATH, n: int = SAMPLE_USER_COUNT) -> list[
     Returns:
         Lista dos primeiros `n` `user_id` conhecidos pelo modelo.
     """
-    model: ItemKNNRecommender = joblib.load(model_path)
+    model: BaseRecommender = joblib.load(model_path)
     # Acessa o dict interno diretamente — BaseRecommender (Strategy) não expõe a
     # lista de usuários conhecidos, e adicionar isso à interface obrigaria
     # implementar em todos os modelos só para este script de promoção.
@@ -97,8 +103,9 @@ def promote_to_staging() -> None:
     configure_mlflow_tracking()
     client = MlflowClient()
 
+    model_type, _ = _load_model_config()
     experiment_id = mlflow.tracking.fluent._get_experiment_id()
-    run_id = _find_latest_pipeline_run(client, experiment_id)
+    run_id = _find_latest_pipeline_run(client, experiment_id, model_type)
 
     model_version = mlflow.register_model(f"runs:/{run_id}/model", name=settings.MLFLOW_MODEL_NAME)
     client.set_registered_model_alias(settings.MLFLOW_MODEL_NAME, "staging", model_version.version)

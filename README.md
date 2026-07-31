@@ -4,7 +4,7 @@
 
 Projeto desenvolvido para o Tech Challenge da Fase 2 do curso de Machine Learning Engineering da FIAP, focado na construção de um sistema de recomendação de produtos end-to-end para e-commerce com modelos baselines, experimentos e Model Registry rastreados via MLflow, pipeline de dados reprodutível com DVC e serviço provisionado via API em FastAPI, containerizado com Docker.
 
-Para um resumo rápido, também temos um [🎥Vídeo Explicativo em menos de 5 min](https://youtu.be/SEU_VIDEO_AQUI)
+Para um resumo rápido, também temos um [🎥Vídeo Explicativo em menos de 5 min](https://www.youtube.com/watch?v=PGcszasr_EE)
 
 ---
 

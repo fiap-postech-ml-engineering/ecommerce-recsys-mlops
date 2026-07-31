@@ -10,7 +10,7 @@ PYTHON_INTERPRETER = python
 # COMMANDS                                                                      #
 #################################################################################
 
-.PHONY: help requirements create_environment dataset dvc test test-slow test-cov lint lint-fix lint-fix-unsafe format format-fix format-diff format-verbose check check-slow clean init docker-build docker-up docker-up-detached docker-down docker-logs docker-check stop
+.PHONY: help requirements create_environment dataset dvc test test-slow test-cov lint lint-fix lint-fix-unsafe format format-fix format-diff format-verbose check check-slow clean init mlflow-ui docker-build docker-up docker-up-detached docker-down docker-logs docker-check stop
 
 .DEFAULT_GOAL := help
 
@@ -38,6 +38,7 @@ help:
 
 	@echo "  make clean               - Remove arquivos temporários"
 	@echo "  make init                - Inicia API local com uvicorn"
+	@echo "  make mlflow-ui           - Sobe a MLflow UI local (tracking em logs/mlruns)"
 	@echo "  make stop                - Para serviços Docker"
 
 	@echo "  make docker-build        - Builda os serviços Docker"
@@ -62,51 +63,51 @@ dataset:
 	@echo ">>> Limpando a pasta data/raw"
 	rm -rf data/raw/*
 	@echo ">>> Baixando e processando dataset..."
-	uv run python -c "from src.data.loader import load_dataset; load_dataset(force_rebuild=True)"
+	uv run python -c "from src.data.loader import load_or_build_dataset; load_or_build_dataset(force_rebuild=True)"
 	@echo ">>> Dataset processado e salvo em data/raw."
 
 dvc:
 	@echo ">>> Configurando DVC no storage local..."
-	uv dvc remote add -d localremote ~/dvc-storage --local
-	uv dvc commit data/raw.dvc
-	uv dvc push
+	uv run dvc remote add -d localremote ~/dvc-storage --local
+	uv run dvc commit data/raw.dvc
+	uv run dvc push
 	@echo ">>> DVC configurado em ~/dvc-storage."
 
 ## Testes
 
 test:
-	python -m pytest tests/ -v --no-cov -m "not slow"
+	uv run python -m pytest tests/ -v --no-cov -m "not slow"
 
 test-slow:
-	python -m pytest tests/ -v --no-cov -m "slow"
+	uv run python -m pytest tests/ -v --no-cov -m "slow"
 
 test-cov:
-	python -m pytest tests/ -v --cov=src --cov-report=html --cov-report=term
+	uv run python -m pytest tests/ -v --cov=src --cov-report=html --cov-report=term
 
 ## Lint
 
 lint:
-	python -m ruff check src/ tests/
+	uv run ruff check src/ tests/
 
 lint-fix:
-	python -m ruff check src/ tests/ --fix
+	uv run ruff check src/ tests/ --fix
 
 lint-fix-unsafe:
-	python -m ruff check src/ tests/ --fix --unsafe-fixes
+	uv run ruff check src/ tests/ --fix --unsafe-fixes
 
 ## Formatação
 
 format:
-	python -m ruff format --check src/ tests/
+	uv run ruff format --check src/ tests/
 
 format-fix:
-	python -m ruff format src/ tests/
+	uv run ruff format src/ tests/
 
 format-diff:
-	python -m ruff format --diff src/ tests/
+	uv run ruff format --diff src/ tests/
 
 format-verbose:
-	python -m ruff format -v src/ tests/
+	uv run ruff format -v src/ tests/
 
 ## Checks combinados
 
@@ -130,6 +131,12 @@ clean:
 
 init:
 	uv run uvicorn src.api.app:app --host 0.0.0.0 --port 8000 --reload
+
+mlflow-ui:
+	MLFLOW_ALLOW_FILE_STORE=true uv run mlflow ui \
+		--backend-store-uri "file://$(CURDIR)/logs/mlruns" \
+		--default-artifact-root "file://$(CURDIR)/models/mlruns" \
+		--port 5000
 
 docker-build:
 	docker compose build

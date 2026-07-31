@@ -10,7 +10,7 @@ PYTHON_INTERPRETER = python
 # COMMANDS                                                                      #
 #################################################################################
 
-.PHONY: help requirements create_environment test test-slow test-cov lint lint-fix lint-fix-unsafe format format-fix format-diff format-verbose check check-slow clean init docker-build docker-up docker-up-detached docker-down docker-logs docker-check stop
+.PHONY: help requirements create_environment dataset dvc test test-slow test-cov lint lint-fix lint-fix-unsafe format format-fix format-diff format-verbose check check-slow clean init docker-build docker-up docker-up-detached docker-down docker-logs docker-check stop
 
 .DEFAULT_GOAL := help
 
@@ -18,9 +18,13 @@ help:
 	@echo "Comandos disponíveis:"
 	@echo "  make requirements        - Instala dependências Python (uv sync)"
 	@echo "  make create_environment  - Cria ambiente virtual com uv"
+	@echo "  make dataset             - Baixa e processa o dataset em data/raw"
+	@echo "  make dvc                 - Configura remote DVC local e faz push de data/raw.dvc"
+
 	@echo "  make test                - Roda testes com output verboso (exclui slow)"
 	@echo "  make test-slow           - Roda apenas os testes marcados como slow"
 	@echo "  make test-cov            - Roda testes com cobertura (relatório HTML)"
+
 	@echo "  make lint                - Verifica estilo do código com Ruff"
 	@echo "  make lint-fix            - Corrige automaticamente issues de linting"
 	@echo "  make lint-fix-unsafe     - Corrige automaticamente issues com unsafe-fixes"
@@ -28,11 +32,14 @@ help:
 	@echo "  make format-fix          - Formata código com Ruff"
 	@echo "  make format-diff         - Mostra diferenças de formatação sem modificar"
 	@echo "  make format-verbose      - Formata código com output verboso"
+
 	@echo "  make check               - Executa lint, format e testes (sequencial, exclui slow)"
 	@echo "  make check-slow          - Executa lint, format e todos os testes (incluindo slow)"
+
 	@echo "  make clean               - Remove arquivos temporários"
 	@echo "  make init                - Inicia API local com uvicorn"
 	@echo "  make stop                - Para serviços Docker"
+
 	@echo "  make docker-build        - Builda os serviços Docker"
 	@echo "  make docker-up           - Sobe os serviços Docker"
 	@echo "  make docker-up-detached  - Sobe os serviços Docker em background"

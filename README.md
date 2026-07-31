@@ -77,8 +77,6 @@ dvc remote add -d localremote ~/dvc-storage --local
 dvc commit data/raw.dvc
 dvc push
 ```
-> Esse remote é local/individual, só para validar o fluxo do DVC nesta etapa do projeto.
-> O remote compartilhado (S3/DBFS) será configurado em uma etapa futura.
 
 ## 📁 Organização do projeto
 
@@ -282,6 +280,23 @@ uv run python -m src.tracking.promote_model --stage production
 ```
 
 > A API só serve o modelo com alias `production` no Registry. Se você promover um modelo novo enquanto a API já está rodando, é preciso reiniciá-la — o carregamento acontece uma única vez, no startup (`lifespan` em `src/api/app.py`).
+
+#### Visualizar experimentos na MLflow UI (backend local)
+
+Se `MLFLOW_TRACKING_URI=local`, o tracking e o Model Registry ficam em arquivos locais
+(`logs/mlruns`/`models/mlruns`). Para inspecionar visualmente os experimentos e o Registry:
+
+```bash
+make mlflow-ui
+```
+
+> Equivalente a `MLFLOW_ALLOW_FILE_STORE=true uv run mlflow ui --backend-store-uri
+> "file://$(pwd)/logs/mlruns" --default-artifact-root "file://$(pwd)/models/mlruns" --port
+> 5000`. A variável `MLFLOW_ALLOW_FILE_STORE=true` é necessária porque o MLflow ≥ 3 bloqueia
+> o backend de arquivo local por padrão (modo manutenção) — o `make mlflow-ui` já cuida
+> disso.
+
+Acesse `http://localhost:5000` para ver os experimentos, runs e o Model Registry.
 
 ### 5. Subir a API
 

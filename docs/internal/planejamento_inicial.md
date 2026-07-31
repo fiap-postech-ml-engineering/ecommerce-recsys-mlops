@@ -146,19 +146,20 @@ O intuito é agregar no ticket médio geral do cliente que já comprou (Não de 
 4. src/models/
    ├── base.py           ← BaseRecommender
    ├── factory.py        ← RecommenderFactory
-   ├── popularity.py     ← baseline pronto
-   ├── mlp.py            ← stub
-   └── svd.py  ← stub
+   ├── popularity.py, svd.py, mlp.py, als.py, bpr.py, itemknn.py
         ↓
-5. notebooks/02_experiments.ipynb  ← só aqui você experimenta
+5. notebooks/02_experiments.ipynb, notebooks/03_mlp.ipynb  ← experimentação
         ↓
-6. Preenche os stubs (mlp.py, svd.py) com base no que aprendeu no notebook
+6. Preenche os modelos com base no que foi aprendido nos notebooks
         ↓
 7. src/training/train.py  ← formaliza o que o notebook fez
         ↓
-8. DVC pipeline + Docker
+8. DVC pipeline (dvc.yaml, 3 stages) + Dockerfile + docker-compose.yml
 ```
-_*stub é uma classe vazia só para preencher depois_
+
+**Nota (estado atual):** este diagrama descreve a ordem planejada originalmente; todas as
+etapas já foram implementadas. Consulte `.claude/CLAUDE.md`, seção "Arquitetura e estado
+atual", para o estado corrente do código.
 
 **Por que essa ordem**
 1. **EDA primeiro** — você não escreve código de processamento sem entender os dados. O loader, o preprocessor e o split dependem do formato real do dataset (colunas, tipos, distribuição de interações, se tem timestamp, etc.).

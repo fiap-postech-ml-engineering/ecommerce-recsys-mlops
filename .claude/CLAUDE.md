@@ -25,34 +25,41 @@ apenas referencie.
 | `make format-fix` | `ruff format` |
 | `make check` | lint + format + test (rodar antes de finalizar qualquer tarefa) |
 | `make init` | sobe a API com `uvicorn --reload` |
+| `make docker-build` | `docker compose build` |
+| `make docker-up` / `make docker-up-detached` | `docker compose up` (foreground / `-d`) |
+| `make docker-down` / `make stop` | `docker compose down` |
+| `make docker-logs` | `docker compose logs -f app` |
+| `make docker-check` | sobe, valida a API e derruba os containers (smoke test) |
 
-Ainda não existem comandos DVC/MLflow/Docker (`dvc.yaml`, `docker-compose.yml` e `Dockerfile`
-estão vazios/ausentes — fazem parte da Etapa 3). Não invente comandos que não existem.
+## Arquitetura e estado atual
 
-## Arquitetura alvo e estado atual
-
-Ordem de implementação planejada (ver seção "Estrutura de desenvolvimento" do
-`planejamento_inicial.md` para o raciocínio completo):
+Pipeline ponta a ponta já implementado — não é mais um plano, é o estado corrente do
+código. Ordem de implementação seguida (ver seção "Estrutura de desenvolvimento" do
+`planejamento_inicial.md` para o raciocínio original por trás da ordem):
 
 ```
 EDA (notebooks/01_eda.ipynb)
-  → src/data/ (loader, preprocessor, split)
-  → src/tracking/ (mlflow_utils)
-  → src/models/ (base, factory, popularity, svd, mlp)
-  → notebooks/02_experiments.ipynb
+  → src/data/ (loader, preprocessor, filtering, schema, split, preprocess)
+  → src/tracking/ (mlflow_utils, promote_model)
+  → src/models/ (base, factory, popularity, svd, mlp, als, bpr, itemknn)
+  → notebooks/02_experiments.ipynb, notebooks/03_mlp.ipynb
   → src/training/train.py
-  → DVC pipeline + Docker
+  → src/evaluation/evaluate.py + src/metrics/ (ranking, business)
+  → src/api/ (app, inference, middleware, schemas, routes/)
+  → dvc.yaml (3 stages: preprocess → train → evaluate) + Dockerfile + docker-compose.yml
 ```
 
-Hoje, `src/data/`, `src/models/`, `src/evaluation/`, `src/tracking/` e `src/training/` são
-stubs vazios. `src/config.py` (Pydantic Settings, `get_settings()`) e `src/api/app.py`
-(FastAPI básica com healthcheck) já estão implementados.
+`src/config.py` (Pydantic Settings), `src/api/` (FastAPI com `/health` e `/recommend`),
+todos os modelos do registry (`popularity`, `svd`, `mlp`, `als`, `bpr`, `itemknn` — ver
+`src/models/factory.py`), o pipeline DVC e a containerização Docker estão implementados.
+Consulte o filesystem antes de assumir que algo listado aqui como pendência em versões
+anteriores deste arquivo ainda não existe.
 
 ### Design patterns obrigatórios
 
 - **Strategy** — `BaseRecommender` (ABC) define a interface comum `fit`, `recommend`,
-  `get_params`. Todos os modelos (Popularity, SVD, MLP) implementam essa interface, de modo
-  que `train.py` e `evaluate.py` nunca precisem de `if/elif` por tipo de modelo.
+  `get_params`. Todos os modelos do registry implementam essa interface, de modo que
+  `train.py` e `evaluate.py` nunca precisem de `if/elif` por tipo de modelo.
 - **Factory Method** — `RecommenderFactory.create(name, config)` instancia o modelo correto
   a partir de uma string (vinda de `params.yaml` do DVC), permitindo trocar de modelo sem
   alterar `train.py`.
@@ -145,10 +152,9 @@ sem o Makefile.
 
 ## Pendências conhecidas
 
-- `pyproject.toml` ainda não tem `torch`, `scikit-learn`, `mlflow`, `dvc`,
-  `scikit-surprise` — adicionar somente quando a implementação dos modelos exigir.
-- `Dockerfile`, `docker-compose.yml`, `dvc.yaml` vazios — parte da Etapa 3.
-- `README.md` ainda tem placeholders Lorem Ipsum — atualizar na Etapa 4.
-
-Não trate essas pendências como bugs a corrigir proativamente — fazem parte das próximas
-etapas do desafio e devem ser endereçadas na ordem do pipeline descrito acima.
+Etapas 1–3 do desafio (clean code, deps/ambiente, Docker+DVC+MLflow) estão substancialmente
+cobertas no repositório. O que resta pertence à Etapa 4 (`docs/internal/tech_challenge.md`,
+seção 4.4) — Model Card, vídeo STAR e deploy opcional em nuvem. Antes de reportar qualquer
+outra pendência, verifique o filesystem: este arquivo já ficou desatualizado uma vez
+(Docker/DVC/README reportados como ausentes quando já estavam implementados) — não repita
+o erro assumindo estado do código a partir da documentação.

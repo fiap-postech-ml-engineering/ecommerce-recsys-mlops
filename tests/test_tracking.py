@@ -55,7 +55,14 @@ def test_configure_mlflow_tracking_uses_settings_for_databricks(monkeypatch):
 @pytest.mark.slow
 def test_configure_mlflow_tracking_authenticates_with_databricks():
     settings = get_settings()
-    if not settings.DATABRICKS_HOST or not settings.DATABRICKS_TOKEN:
+    placeholder = "__set_me__"
+    if (
+        settings.MLFLOW_TRACKING_URI != "databricks"
+        or not settings.DATABRICKS_HOST
+        or not settings.DATABRICKS_TOKEN
+        or settings.DATABRICKS_HOST == placeholder
+        or settings.DATABRICKS_TOKEN == placeholder
+    ):
         pytest.skip("DATABRICKS_HOST/DATABRICKS_TOKEN não configurados em .env")
 
     tracking_uri = configure_mlflow_tracking()
@@ -269,7 +276,14 @@ def test_start_notebook_run_parent_hierarchy(tmp_path, monkeypatch):
 @pytest.mark.slow
 def test_full_dummy_run_logs_to_mlflow_with_expected_tags():
     settings = get_settings()
-    if not settings.DATABRICKS_HOST or not settings.DATABRICKS_TOKEN:
+    placeholder = "__set_me__"
+    if (
+        settings.MLFLOW_TRACKING_URI != "databricks"
+        or not settings.DATABRICKS_HOST
+        or not settings.DATABRICKS_TOKEN
+        or settings.DATABRICKS_HOST == placeholder
+        or settings.DATABRICKS_TOKEN == placeholder
+    ):
         pytest.skip("DATABRICKS_HOST/DATABRICKS_TOKEN não configurados em .env")
 
     class DummyRecommender:

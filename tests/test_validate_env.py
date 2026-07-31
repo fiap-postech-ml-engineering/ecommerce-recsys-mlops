@@ -58,3 +58,27 @@ def test_main_exits_with_error_when_settings_invalid():
 def test_main_runs_without_raising_when_settings_valid():
     with patch("scripts.validate_env._load_settings", return_value=Settings()):
         main()
+
+
+@pytest.mark.unit
+def test_main_skips_databricks_check_when_tracking_uri_is_local():
+    settings = Settings(MLFLOW_TRACKING_URI="local", DATABRICKS_HOST=None, DATABRICKS_TOKEN=None)
+    with patch("scripts.validate_env._load_settings", return_value=settings):
+        main()
+
+
+@pytest.mark.unit
+def test_main_warns_when_databricks_tracking_uri_missing_credentials():
+    settings = Settings(
+        MLFLOW_TRACKING_URI="databricks", DATABRICKS_HOST=None, DATABRICKS_TOKEN=None
+    )
+    with (
+        patch("scripts.validate_env._load_settings", return_value=settings),
+        patch("scripts.validate_env.logger") as mock_logger,
+    ):
+        main()
+
+    formatted_messages = [
+        call.args[0] % call.args[1:] for call in mock_logger.warning.call_args_list
+    ]
+    assert any("DATABRICKS_HOST" in msg for msg in formatted_messages)

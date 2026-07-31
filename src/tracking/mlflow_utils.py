@@ -96,7 +96,14 @@ def configure_mlflow_tracking(
 
         return mlflow.get_tracking_uri()
 
-    # Local file-based store
+    # Local file-based store. MLflow >= 3 bloqueia o filesystem tracking backend por
+    # padrão (modo manutenção, sem novidades futuras) — precisa opt-in explícito. É a
+    # opção usada aqui (em vez de sqlite) porque mantém metadados e artefatos dentro do
+    # mesmo diretório, sem risco do artifact_location gravar um caminho absoluto de
+    # outro backend que quebre ao mover o projeto de pasta/máquina.
+    if "MLFLOW_ALLOW_FILE_STORE" not in os.environ:
+        os.environ["MLFLOW_ALLOW_FILE_STORE"] = "true"
+
     store_path = Path(db_path) if db_path is not None else LOGS_DIR / "mlruns"
     store_path.mkdir(parents=True, exist_ok=True)
     tracking_uri_local = store_path.resolve().as_uri()

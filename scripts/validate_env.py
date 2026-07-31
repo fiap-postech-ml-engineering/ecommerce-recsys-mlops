@@ -60,12 +60,19 @@ def main() -> None:
 
     logger.info("Settings carregado com sucesso (APP_ENV=%s).", settings.APP_ENV)
 
-    missing_databricks = _missing_or_placeholder(settings, DATABRICKS_VARS)
-    if missing_databricks:
-        logger.warning(
-            "Credenciais do Databricks/MLflow não configuradas: %s. "
-            "Tracking/Registry do MLflow vai falhar até isso ser preenchido no .env.",
-            ", ".join(missing_databricks),
+    missing_databricks: list[str] = []
+    if settings.MLFLOW_TRACKING_URI == "databricks":
+        missing_databricks = _missing_or_placeholder(settings, DATABRICKS_VARS)
+        if missing_databricks:
+            logger.warning(
+                "MLFLOW_TRACKING_URI=databricks mas faltam credenciais: %s. "
+                "Tracking/Registry do MLflow vai falhar até isso ser preenchido no .env.",
+                ", ".join(missing_databricks),
+            )
+    else:
+        logger.info(
+            "MLFLOW_TRACKING_URI=%s — MLflow local, sem credenciais necessárias.",
+            settings.MLFLOW_TRACKING_URI,
         )
 
     missing_dvc = _missing_or_placeholder(settings, DVC_REMOTE_VARS)

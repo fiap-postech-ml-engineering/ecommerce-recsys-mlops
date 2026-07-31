@@ -13,7 +13,7 @@ import sys
 
 from pydantic import ValidationError
 
-from src.config import Settings
+from src.config import Settings, get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -27,8 +27,13 @@ DVC_REMOTE_VARS = ("DVC_REMOTE_URL", "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY
 
 
 def _load_settings() -> Settings:
-    """Instancia `Settings`, deixando a `ValidationError` do Pydantic propagar."""
-    return Settings()
+    """Instancia `Settings` via `get_settings()`, deixando a `ValidationError` propagar.
+
+    Usa `get_settings()` (não `Settings()` diretamente) porque é ela quem chama
+    `setup_logging(settings)` — sem isso, os `logger.info`/`logger.warning` abaixo
+    não têm handler configurado e o script roda mudo.
+    """
+    return get_settings()
 
 
 def _missing_or_placeholder(settings: Settings, var_names: tuple[str, ...]) -> list[str]:
